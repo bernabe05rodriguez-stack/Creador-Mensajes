@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Opiniones - MAVERIX</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #111318; color: #c8cdd5; min-height: 100vh; }
+        .container { max-width: 880px; margin: 0 auto; padding: 24px 20px; }
+        .header { text-align: center; padding: 36px 0 24px; }
+        .header h1 { font-size: 1rem; font-weight: 400; color: #6b7280; letter-spacing: 3px; text-transform: uppercase; }
+        .header .brand { font-size: 2.4rem; font-weight: 700; color: #fff; letter-spacing: 8px; margin-top: 4px; text-shadow: 0 0 40px rgba(99,102,241,0.3); }
+        .header .line { width: 60px; height: 2px; background: linear-gradient(90deg, transparent, #6366f1, transparent); margin: 14px auto 0; }
+
+        .card { background: #1a1d24; border: 1px solid #262a33; border-radius: 14px; padding: 24px; margin-bottom: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+
+        /* Login */
+        .login { max-width: 380px; margin: 0 auto; }
+        .login h2 { color: #9ca3af; font-size: 0.9rem; margin-bottom: 14px; }
+        .login input { width: 100%; background: #15171e; color: #c8cdd5; border: 1px solid #2d3140; border-radius: 10px; padding: 12px; font-size: 0.95rem; margin-bottom: 12px; }
+        .login input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.15); }
+        .btn { width: 100%; background: linear-gradient(135deg, #6366f1, #818cf8); color: #fff; padding: 12px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.92rem; transition: all 0.25s; box-shadow: 0 4px 20px rgba(99,102,241,0.35); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(99,102,241,0.5); }
+        .login .err { color: #f87171; font-size: 0.85rem; margin-bottom: 10px; min-height: 18px; }
+
+        /* Stats */
+        .stats-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+        .stat { flex: 1; min-width: 140px; background: #1a1d24; border: 1px solid #262a33; border-radius: 14px; padding: 20px; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+        .stat .num { font-size: 2rem; font-weight: 700; color: #fff; }
+        .stat .num.amber { color: #fbbf24; }
+        .stat .lbl { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+        /* Distribution */
+        .dist { margin-top: 6px; }
+        .dist-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 0.82rem; }
+        .dist-row .dlabel { width: 30px; color: #9ca3af; }
+        .dist-bar { flex: 1; height: 10px; background: #15171e; border-radius: 6px; overflow: hidden; }
+        .dist-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #6366f1, #818cf8); }
+        .dist-row .dcount { width: 30px; text-align: right; color: #6b7280; }
+
+        /* List */
+        .list-title { color: #9ca3af; font-size: 0.82rem; font-weight: 600; margin: 8px 0 12px; letter-spacing: 0.5px; }
+        .resp { background: #1a1d24; border: 1px solid #262a33; border-radius: 12px; padding: 16px 18px; margin-bottom: 10px; }
+        .resp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .resp-stars { color: #fbbf24; font-size: 1rem; letter-spacing: 2px; }
+        .resp-stars .off { color: #2d3140; }
+        .resp-date { color: #6b7280; font-size: 0.78rem; }
+        .resp-text { color: #c8cdd5; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; }
+        .resp-text.empty { color: #4b5563; font-style: italic; }
+        .empty-state { text-align: center; color: #6b7280; padding: 40px 0; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .toolbar a { color: #a5b4fc; font-size: 0.85rem; text-decoration: none; }
+        .toolbar a:hover { text-decoration: underline; }
+        .btn-sm { background: #1e2028; color: #9ca3af; border: 1px solid #2d3140; padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 0.82rem; }
+        .btn-sm:hover { background: #2d3140; color: #fff; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Panel de Opiniones</h1>
+            <div class="brand">MAVERIX</div>
+            <div class="line"></div>
+        </div>
+
+        <!-- Login -->
+        <div class="card login" id="loginCard">
+            <h2>Ingresa la clave de admin</h2>
+            <div class="err" id="loginErr"></div>
+            <input type="password" id="keyInput" placeholder="Clave de admin" autocomplete="current-password">
+            <button class="btn" id="loginBtn">Entrar</button>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="hidden">
+            <div class="toolbar">
+                <a href="/">&larr; Volver a la app</a>
+                <button class="btn-sm" id="refreshBtn">Actualizar</button>
+            </div>
+            <div class="stats-row">
+                <div class="stat"><div class="num" id="stTotal">0</div><div class="lbl">Respuestas</div></div>
+                <div class="stat"><div class="num amber" id="stAvg">-</div><div class="lbl">Promedio</div></div>
+                <div class="stat"><div class="num" id="stWithText">0</div><div class="lbl">Con comentario</div></div>
+            </div>
+            <div class="card">
+                <div class="list-title">Distribucion de puntajes</div>
+                <div class="dist" id="dist"></div>
+            </div>
+            <div class="list-title">Respuestas (mas nuevas primero)</div>
+            <div id="list"></div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        const loginCard = document.getElementById('loginCard');
+        const dashboard = document.getElementById('dashboard');
+        const keyInput = document.getElementById('keyInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginErr = document.getElementById('loginErr');
+        let adminKey = '';
+
+        function stars(n) {
+            let s = '';
+            for (let i = 1; i <= 5; i++) s += i <= n ? '★' : '<span class="off">★</span>';
+            return s;
+        }
+        function fmtDate(iso) {
+            const d = new Date(iso);
+            if (isNaN(d)) return iso || '';
+            return d.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+        function escHtml(str) {
+            const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+        }
+
+        function render(responses) {
+            responses.sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
+            const total = responses.length;
+            const sum = responses.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+            const avg = total ? (sum / total) : 0;
+            const withText = responses.filter(r => r.text && r.text.trim()).length;
+
+            document.getElementById('stTotal').textContent = total;
+            document.getElementById('stAvg').textContent = total ? avg.toFixed(1) + ' ★' : '-';
+            document.getElementById('stWithText').textContent = withText;
+
+            // Distribucion 5 -> 1
+            const counts = {1:0,2:0,3:0,4:0,5:0};
+            responses.forEach(r => { const v = Number(r.rating); if (counts[v] !== undefined) counts[v]++; });
+            const maxC = Math.max(1, ...Object.values(counts));
+            let dist = '';
+            for (let i = 5; i >= 1; i--) {
+                const pct = (counts[i] / maxC) * 100;
+                dist += '<div class="dist-row"><span class="dlabel">' + i + '★</span>'
+                      + '<span class="dist-bar"><span style="width:' + pct + '%"></span></span>'
+                      + '<span class="dcount">' + counts[i] + '</span></div>';
+            }
+            document.getElementById('dist').innerHTML = dist;
+
+            // Lista
+            const list = document.getElementById('list');
+            if (!total) { list.innerHTML = '<div class="empty-state">Todavia no hay respuestas.</div>'; return; }
+            list.innerHTML = responses.map(r => {
+                const txt = (r.text && r.text.trim())
+                    ? '<div class="resp-text">' + escHtml(r.text) + '</div>'
+                    : '<div class="resp-text empty">(sin comentario)</div>';
+                return '<div class="resp"><div class="resp-head">'
+                    + '<span class="resp-stars">' + stars(Number(r.rating)) + '</span>'
+                    + '<span class="resp-date">' + fmtDate(r.ts) + '</span></div>'
+                    + txt + '</div>';
+            }).join('');
+        }
+
+        function load() {
+            return fetch('/api/feedback?key=' + encodeURIComponent(adminKey))
+                .then(r => {
+                    if (r.status === 401) { throw new Error('clave'); }
+                    if (!r.ok) throw new Error('server');
+                    return r.json();
+                })
+                .then(data => { render(data.responses || []); });
+        }
+
+        function doLogin() {
+            adminKey = keyInput.value.trim();
+            if (!adminKey) { loginErr.textContent = 'Ingresa la clave.'; return; }
+            loginErr.textContent = '';
+            loginBtn.disabled = true;
+            load().then(() => {
+                loginCard.classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                try { sessionStorage.setItem('maverix_admin_key', adminKey); } catch (e) {}
+            }).catch(err => {
+                loginErr.textContent = err.message === 'clave' ? 'Clave incorrecta.' : 'Error al cargar. Reintenta.';
+            }).finally(() => { loginBtn.disabled = false; });
+        }
+
+        loginBtn.addEventListener('click', doLogin);
+        keyInput.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            load().catch(() => alert('No se pudo actualizar.'));
+        });
+
+        // Auto-login si ya entro en esta sesion
+        try {
+            const saved = sessionStorage.getItem('maverix_admin_key');
+            if (saved) {
+                adminKey = saved;
+                load().then(() => { loginCard.classList.add('hidden'); dashboard.classList.remove('hidden'); })
+                      .catch(() => { try { sessionStorage.removeItem('maverix_admin_key'); } catch (e) {} });
+            }
+        } catch (e) {}
+    })();
+    </script>
+</body>
+</html>

@@ -212,6 +212,66 @@
             box-shadow: 0 8px 32px rgba(99,102,241,0.4);
         }
         .toast.show { transform: translateY(0); opacity: 1; }
+
+        /* Feedback modal */
+        .fb-overlay {
+            position: fixed; inset: 0;
+            background: rgba(8,9,12,0.7);
+            backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 200; padding: 20px;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .fb-overlay.show { display: flex; opacity: 1; }
+        .fb-modal {
+            background: #1a1d24;
+            border: 1px solid #262a33;
+            border-radius: 16px;
+            padding: 28px 26px;
+            max-width: 440px; width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04);
+            transform: translateY(16px) scale(0.98);
+            transition: transform 0.3s;
+        }
+        .fb-overlay.show .fb-modal { transform: translateY(0) scale(1); }
+        .fb-modal h3 { color: #fff; font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
+        .fb-modal .fb-sub { color: #6b7280; font-size: 0.86rem; margin-bottom: 20px; line-height: 1.45; }
+        .fb-label { color: #9ca3af; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; letter-spacing: 0.3px; }
+        .fb-stars { display: flex; gap: 6px; margin-bottom: 20px; }
+        .fb-star {
+            font-size: 1.9rem; line-height: 1; cursor: pointer;
+            color: #2d3140; transition: color 0.15s, transform 0.15s;
+            user-select: none;
+        }
+        .fb-star:hover { transform: scale(1.15); }
+        .fb-star.on { color: #fbbf24; text-shadow: 0 0 16px rgba(251,191,36,0.4); }
+        .fb-modal textarea {
+            width: 100%; min-height: 90px; resize: vertical;
+            background: #15171e; color: #c8cdd5;
+            border: 1px solid #2d3140; border-radius: 10px;
+            padding: 12px; font-family: inherit; font-size: 0.9rem;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+        }
+        .fb-modal textarea:focus { outline: none; border-color: #6366f1; box-shadow: inset 0 2px 6px rgba(0,0,0,0.15), 0 0 0 2px rgba(99,102,241,0.15); }
+        .fb-actions { display: flex; gap: 10px; justify-content: flex-end; align-items: center; }
+        .fb-skip {
+            background: none; border: none; color: #6b7280;
+            font-size: 0.85rem; cursor: pointer; padding: 10px 12px;
+            transition: color 0.2s;
+        }
+        .fb-skip:hover { color: #9ca3af; }
+        .btn-send {
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            color: #fff; padding: 11px 26px; border: none; border-radius: 10px;
+            font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.25s;
+            box-shadow: 0 4px 20px rgba(99,102,241,0.35), 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .btn-send:hover { box-shadow: 0 6px 28px rgba(99,102,241,0.5); transform: translateY(-2px); }
+        .btn-send:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+        .fb-thanks { text-align: center; padding: 16px 0 4px; }
+        .fb-thanks .fb-check { font-size: 2.6rem; margin-bottom: 10px; }
+        .fb-thanks h3 { margin-bottom: 6px; }
     </style>
 </head>
 <body>
@@ -283,8 +343,43 @@
 
     <div class="toast" id="toast"></div>
 
+    <!-- Feedback modal -->
+    <div class="fb-overlay" id="fbOverlay">
+        <div class="fb-modal">
+            <div id="fbForm">
+                <h3>&#128172; &iquest;Qu&eacute; te pareci&oacute;?</h3>
+                <p class="fb-sub">Tu opini&oacute;n nos ayuda a mejorar la herramienta. Te lleva 10 segundos.</p>
+
+                <div class="fb-label">&iquest;Qu&eacute; tan &uacute;til te result&oacute;?</div>
+                <div class="fb-stars" id="fbStars">
+                    <span class="fb-star" data-val="1">&#9733;</span>
+                    <span class="fb-star" data-val="2">&#9733;</span>
+                    <span class="fb-star" data-val="3">&#9733;</span>
+                    <span class="fb-star" data-val="4">&#9733;</span>
+                    <span class="fb-star" data-val="5">&#9733;</span>
+                </div>
+
+                <div class="fb-label">&iquest;Qu&eacute; mejorar&iacute;as o qu&eacute; le falta?</div>
+                <textarea id="fbText" placeholder="Escrib&iacute; tu sugerencia ac&aacute;... (opcional)"></textarea>
+
+                <div class="fb-actions">
+                    <button class="fb-skip" id="fbSkip">Ahora no</button>
+                    <button class="btn-send" id="fbSend" disabled>Enviar</button>
+                </div>
+            </div>
+            <div class="fb-thanks" id="fbThanks" style="display:none;">
+                <div class="fb-check">&#10004;&#65039;</div>
+                <h3>&iexcl;Gracias!</h3>
+                <p class="fb-sub" style="margin-bottom:0;">Tu opini&oacute;n fue registrada.</p>
+            </div>
+        </div>
+    </div>
+
     <script>
     (function() {
+        // Endpoint del backend (mismo servidor). server.js guarda las respuestas.
+        const FEEDBACK_ENDPOINT = '/api/feedback';
+
         let rawData = [];
         let headers = [];
         const phoneColNames = ['Telefono_1','Telefono_2','Telefono_3','Telefono_4','Telefono_5','Telefono_6','Telefono_7','Telefono_8','Telefono_9'];
@@ -561,7 +656,62 @@
             a.click();
             URL.revokeObjectURL(url);
             showToast('CSV descargado con ' + contactRows.length + ' telefonos');
+            maybeShowFeedback();
         }
+
+        // ========== FEEDBACK ==========
+        const fbOverlay = document.getElementById('fbOverlay');
+        const fbStars = document.getElementById('fbStars');
+        const fbText = document.getElementById('fbText');
+        const fbSend = document.getElementById('fbSend');
+        const fbSkip = document.getElementById('fbSkip');
+        const fbForm = document.getElementById('fbForm');
+        const fbThanks = document.getElementById('fbThanks');
+        let fbRating = 0;
+
+        function paintStars() {
+            fbStars.querySelectorAll('.fb-star').forEach(s => {
+                s.classList.toggle('on', Number(s.dataset.val) <= fbRating);
+            });
+            fbSend.disabled = fbRating === 0;
+        }
+        fbStars.querySelectorAll('.fb-star').forEach(s => {
+            s.addEventListener('click', () => { fbRating = Number(s.dataset.val); paintStars(); });
+            s.addEventListener('mouseenter', () => {
+                const v = Number(s.dataset.val);
+                fbStars.querySelectorAll('.fb-star').forEach(o => o.classList.toggle('on', Number(o.dataset.val) <= v));
+            });
+        });
+        fbStars.addEventListener('mouseleave', paintStars);
+
+        function maybeShowFeedback() {
+            // No molestar si ya enviaron una opinion antes
+            try { if (localStorage.getItem('maverix_fb_sent')) return; } catch (e) {}
+            setTimeout(() => fbOverlay.classList.add('show'), 600);
+        }
+        function closeFeedback() { fbOverlay.classList.remove('show'); }
+
+        fbSkip.addEventListener('click', closeFeedback);
+        fbOverlay.addEventListener('click', e => { if (e.target === fbOverlay) closeFeedback(); });
+
+        fbSend.addEventListener('click', () => {
+            if (fbRating === 0) return;
+            fbSend.disabled = true;
+            fetch(FEEDBACK_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rating: fbRating, text: fbText.value.trim() })
+            }).then(r => {
+                if (!r.ok) throw new Error();
+                try { localStorage.setItem('maverix_fb_sent', '1'); } catch (e) {}
+                fbForm.style.display = 'none';
+                fbThanks.style.display = 'block';
+                setTimeout(closeFeedback, 2200);
+            }).catch(() => {
+                fbSend.disabled = false;
+                showToast('No se pudo enviar. Reintenta.');
+            });
+        });
 
         function csvField(val) {
             val = String(val);
