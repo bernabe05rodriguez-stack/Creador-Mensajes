@@ -92,6 +92,13 @@
         .login, .stat, .resp { animation: riseIn 0.5s cubic-bezier(0.22,1,0.36,1) both; }
         .stat:nth-child(2) { animation-delay: 0.08s; }
         .stat:nth-child(3) { animation-delay: 0.16s; }
+        /* Resplandor que sigue el cursor */
+        .card, .stat { position: relative; overflow: hidden; }
+        .card::after, .stat::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.4s;
+            background: radial-gradient(300px circle at var(--mx, 50%) var(--my, 50%), rgba(99,102,241,0.10), transparent 60%);
+        }
+        .card:hover::after, .stat:hover::after { opacity: 1; }
         @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
     </style>
 </head>
@@ -229,6 +236,15 @@
                 loginErr.textContent = err.message === 'clave' ? 'Clave incorrecta.' : 'Error al cargar. Reintenta.';
             }).finally(() => { loginBtn.disabled = false; });
         }
+
+        // Resplandor que sigue el cursor
+        document.querySelectorAll('.card, .stat').forEach(el => {
+            el.addEventListener('pointermove', e => {
+                const r = el.getBoundingClientRect();
+                el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+                el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+            });
+        });
 
         loginBtn.addEventListener('click', doLogin);
         keyInput.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });

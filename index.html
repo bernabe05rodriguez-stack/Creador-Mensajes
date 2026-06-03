@@ -129,7 +129,15 @@
             border: 1px solid rgba(255,255,255,0.06);
             box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
             transition: opacity 0.4s, transform 0.4s, border-color 0.3s;
+            position: relative;
         }
+        /* Resplandor que sigue el cursor */
+        .step::after {
+            content: ''; position: absolute; inset: 0; border-radius: 18px;
+            pointer-events: none; opacity: 0; transition: opacity 0.4s;
+            background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(99,102,241,0.10), transparent 60%);
+        }
+        .step:not(.disabled):hover::after { opacity: 1; }
         .step:not(.disabled):hover { border-color: rgba(99,102,241,0.25); }
         .step.disabled { opacity: 0.3; pointer-events: none; transform: translateY(6px); filter: saturate(0.6); }
         h2 {
@@ -168,7 +176,7 @@
         }
         .upload-area::before {
             content: ''; position: absolute; inset: 0;
-            background: radial-gradient(circle at 50% 120%, rgba(99,102,241,0.12), transparent 60%);
+            background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 90%), rgba(99,102,241,0.16), transparent 60%);
             opacity: 0; transition: opacity 0.3s;
         }
         .upload-area:hover, .upload-area.dragover {
@@ -377,7 +385,7 @@
         /* Floating color orbs */
         .bg-orb {
             position: fixed; border-radius: 50%; z-index: -1; pointer-events: none;
-            filter: blur(70px); opacity: 0.5;
+            filter: blur(70px); opacity: 0.62;
         }
         .orb1 {
             width: 480px; height: 480px; top: -160px; left: -120px;
@@ -399,13 +407,23 @@
             50% { transform: translate(-90px,-70px) scale(1.12); }
         }
 
-        /* Brand shimmer sweep */
+        /* Brand shimmer sweep + gentle float */
         .header .brand {
             background-size: 200% auto;
-            animation: shimmer 6s linear infinite;
+            animation: shimmer 6s linear infinite, brandFloat 5.5s ease-in-out infinite;
         }
         @keyframes shimmer {
             to { background-position: 200% center; }
+        }
+        @keyframes brandFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        /* Header line breathing */
+        .header .line { animation: lineBreathe 4s ease-in-out infinite; }
+        @keyframes lineBreathe {
+            0%, 100% { opacity: 0.7; box-shadow: 0 0 8px rgba(129,140,248,0.4); width: 72px; }
+            50% { opacity: 1; box-shadow: 0 0 16px rgba(129,140,248,0.8); width: 90px; }
         }
 
         /* Staggered entrance */
@@ -454,6 +472,13 @@
         @keyframes confettiFall {
             0% { opacity: 1; transform: translateY(0) rotateZ(0deg); }
             100% { opacity: 0.9; transform: translateY(102vh) rotateZ(640deg); }
+        }
+
+        /* Export button breathing glow (CTA viva) */
+        #step5:not(.disabled) .btn-export { animation: ctaPulse 2.8s ease-in-out infinite; }
+        @keyframes ctaPulse {
+            0%, 100% { box-shadow: 0 6px 24px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.25); }
+            50% { box-shadow: 0 6px 30px rgba(99,102,241,0.65), 0 0 0 4px rgba(99,102,241,0.10), inset 0 1px 0 rgba(255,255,255,0.25); }
         }
 
         /* Footer */
@@ -1009,6 +1034,15 @@
             }
             requestAnimationFrame(tick);
         }
+
+        // Resplandor que sigue el cursor sobre tarjetas y zona de subida
+        document.querySelectorAll('.step, .upload-area').forEach(el => {
+            el.addEventListener('pointermove', e => {
+                const r = el.getBoundingClientRect();
+                el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+                el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+            });
+        });
     })();
     </script>
 </body>
