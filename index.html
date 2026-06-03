@@ -490,6 +490,12 @@
         }
         .footer .heart { color: #818cf8; }
         .footer .dot { opacity: 0.4; margin: 0 8px; }
+        .footer-link {
+            color: #a5b4fc; text-decoration: none; cursor: pointer;
+            border-bottom: 1px dashed rgba(165,180,252,0.4);
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .footer-link:hover { color: #c7d2fe; border-color: rgba(199,210,254,0.75); }
 
         @media (prefers-reduced-motion: reduce) {
             * { animation: none !important; }
@@ -578,8 +584,9 @@
         </div>
 
         <div class="footer">
-            Hecho con <span class="heart">&#10084;</span> por <strong>MAVERIX</strong>
-            <span class="dot">&bull;</span> Mensajes masivos en segundos
+            Hecho con <span class="heart">&#10084;</span> por <strong>brodriguez</strong>
+            <span class="dot">&bull;</span>
+            <a href="#" id="footerFeedback" class="footer-link">Mejoras o sugerencias</a>
         </div>
     </div>
 
@@ -963,6 +970,18 @@
             setTimeout(() => fbOverlay.classList.add('show'), 600);
         }
         function closeFeedback() { fbOverlay.classList.remove('show'); }
+
+        // Abrir la encuesta manualmente (link del footer) — siempre, aunque ya hayan opinado
+        function openFeedback() {
+            fbThanks.style.display = 'none';
+            fbForm.style.display = '';
+            fbRating = 0; paintStars();
+            fbText.value = '';
+            fbSend.disabled = true;
+            fbOverlay.classList.add('show');
+        }
+        const footerFeedback = document.getElementById('footerFeedback');
+        if (footerFeedback) footerFeedback.addEventListener('click', e => { e.preventDefault(); openFeedback(); });
 
         fbSkip.addEventListener('click', closeFeedback);
         fbOverlay.addEventListener('click', e => { if (e.target === fbOverlay) closeFeedback(); });
