@@ -23,11 +23,11 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0a0a0a;
+            --bg: #080808;
             --bg-2: #0d0d0e;
-            --surface: #0e0f10;
-            --line: rgba(255,255,255,0.08);
-            --line-2: rgba(255,255,255,0.14);
+            --surface: #16171b;
+            --line: rgba(255,255,255,0.10);
+            --line-2: rgba(255,255,255,0.16);
             --acid: #c6ff3a;
             --acid-dim: rgba(198,255,58,0.16);
             --amber: #ffb43a;
@@ -73,13 +73,13 @@
             padding: 26px 0 0;
         }
         .brand {
-            font-family: var(--mono); font-weight: 600; font-size: 1.18rem;
-            letter-spacing: 0.5px; color: var(--ink);
-            display: flex; align-items: center; gap: 11px;
+            font-family: var(--mono); font-weight: 700; font-size: 2.1rem;
+            letter-spacing: 1px; color: var(--ink);
+            display: flex; align-items: center; gap: 14px;
         }
         .brand .dot {
-            width: 9px; height: 9px; border-radius: 50%;
-            background: var(--acid); box-shadow: 0 0 12px var(--acid), 0 0 4px var(--acid);
+            width: 13px; height: 13px; border-radius: 50%;
+            background: var(--acid); box-shadow: 0 0 18px var(--acid), 0 0 6px var(--acid);
             animation: pulseDot 2.4s ease-in-out infinite;
         }
         @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
@@ -122,20 +122,24 @@
         .step {
             background: var(--surface);
             border: 1px solid var(--line);
-            border-radius: 8px;
+            border-radius: 10px;
             padding: 24px 26px;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
             position: relative;
-            transition: opacity 0.4s, transform 0.4s, border-color 0.25s, background 0.25s;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+            transition: opacity 0.4s, transform 0.3s, border-color 0.25s, box-shadow 0.3s;
         }
         .step::after {
-            content: ''; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
+            content: ''; position: absolute; inset: 0; border-radius: 10px; pointer-events: none;
             opacity: 0; transition: opacity 0.4s;
-            background: radial-gradient(360px circle at var(--mx,50%) var(--my,50%), rgba(198,255,58,0.07), transparent 60%);
+            background: radial-gradient(360px circle at var(--mx,50%) var(--my,50%), rgba(198,255,58,0.08), transparent 60%);
         }
-        .step:not(.disabled):hover { border-color: rgba(198,255,58,0.35); }
+        .step:not(.disabled):hover {
+            border-color: rgba(198,255,58,0.4); transform: translateY(-2px);
+            box-shadow: 0 22px 50px rgba(0,0,0,0.75), 0 6px 16px rgba(0,0,0,0.55), 0 0 0 1px rgba(198,255,58,0.12), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
         .step:not(.disabled):hover::after { opacity: 1; }
-        .step.disabled { opacity: 0.34; pointer-events: none; }
+        .step.disabled { opacity: 0.4; pointer-events: none; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
         .step.disabled .step-num { color: var(--faint); border-color: var(--line); }
 
         h2 {

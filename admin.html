@@ -13,8 +13,8 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0a0a0a; --bg-2: #0d0d0e; --surface: #0e0f10;
-            --line: rgba(255,255,255,0.08); --line-2: rgba(255,255,255,0.14);
+            --bg: #080808; --bg-2: #0d0d0e; --surface: #16171b;
+            --line: rgba(255,255,255,0.10); --line-2: rgba(255,255,255,0.16);
             --acid: #c6ff3a; --acid-dim: rgba(198,255,58,0.16); --amber: #ffb43a;
             --ink: #ededeb; --muted: #8a8a82; --faint: #5a5a54; --danger: #ff5c5c;
             --mono: 'IBM Plex Mono', ui-monospace, monospace;
@@ -42,14 +42,14 @@
 
         /* Topbar */
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 26px 0 0; }
-        .brand { font-family: var(--mono); font-weight: 600; font-size: 1.18rem; letter-spacing: 0.5px; display: flex; align-items: center; gap: 11px; }
-        .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--acid); box-shadow: 0 0 12px var(--acid); animation: pulseDot 2.4s ease-in-out infinite; }
+        .brand { font-family: var(--mono); font-weight: 700; font-size: 2.1rem; letter-spacing: 1px; display: flex; align-items: center; gap: 14px; }
+        .brand .dot { width: 13px; height: 13px; border-radius: 50%; background: var(--acid); box-shadow: 0 0 18px var(--acid); animation: pulseDot 2.4s ease-in-out infinite; }
         @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
         .status { font-family: var(--mono); font-size: 0.8rem; color: var(--acid); border: 1px solid rgba(198,255,58,0.4); border-radius: 5px; padding: 5px 11px; letter-spacing: 1px; }
         .tagline { font-family: var(--mono); font-size: 0.82rem; color: var(--muted); margin: 18px 0 26px; }
         .tagline .c { color: var(--acid); }
 
-        .card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 22px; margin-bottom: 14px; position: relative; }
+        .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 22px; margin-bottom: 14px; position: relative; box-shadow: 0 16px 40px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05); }
 
         /* Login */
         .login { max-width: 400px; margin: 60px auto 0; }
@@ -70,8 +70,8 @@
 
         /* Stats */
         .stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-        .stat { flex: 1; min-width: 140px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px; text-align: center; position: relative; transition: border-color 0.2s; }
-        .stat:hover { border-color: rgba(198,255,58,0.3); }
+        .stat { flex: 1; min-width: 140px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; text-align: center; position: relative; box-shadow: 0 14px 34px rgba(0,0,0,0.6), 0 3px 10px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05); transition: border-color 0.2s, transform 0.2s; }
+        .stat:hover { border-color: rgba(198,255,58,0.35); transform: translateY(-2px); }
         .stat .num { font-family: var(--mono); font-size: 1.9rem; font-weight: 600; color: var(--acid); }
         .stat .num.amber { color: var(--amber); }
         .stat .lbl { font-family: var(--mono); font-size: 0.64rem; color: var(--faint); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 8px; }
@@ -88,7 +88,7 @@
         /* List */
         .list-title { font-family: var(--mono); color: var(--muted); font-size: 0.74rem; margin: 18px 0 12px; letter-spacing: 1px; text-transform: uppercase; }
         .list-title::before { content: '// '; color: var(--faint); }
-        .resp { background: var(--surface); border: 1px solid var(--line); border-left: 2px solid rgba(198,255,58,0.4); border-radius: 0 8px 8px 0; padding: 15px 18px; margin-bottom: 9px; transition: border-color 0.2s; }
+        .resp { background: var(--surface); border: 1px solid var(--line); border-left: 2px solid rgba(198,255,58,0.4); border-radius: 0 10px 10px 0; padding: 15px 18px; margin-bottom: 10px; box-shadow: 0 10px 26px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04); transition: border-color 0.2s; }
         .resp:hover { border-color: rgba(198,255,58,0.3); border-left-color: var(--acid); }
         .resp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .resp-stars { color: var(--amber); font-size: 0.95rem; letter-spacing: 2px; }
