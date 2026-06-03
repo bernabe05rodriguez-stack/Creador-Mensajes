@@ -3,6 +3,10 @@
 App web para generar CSV de mensajes masivos a partir de un "Informe de Cuentas.csv".
 Incluye una encuesta de opinión que se muestra tras descargar el archivo, y un panel `/admin` para ver las respuestas.
 
+**En vivo:** https://mensajesmasivos.bm6z1s.easypanel.host (panel en `/admin`)
+
+> ⚠️ Esta app **necesita el backend** (`server.js`) para guardar las opiniones. NO usar GitHub Pages (es estático y la encuesta no guarda). Pages quedó desactivado a propósito.
+
 ## Estructura
 
 - `index.html` — la app (subir CSV, armar mensaje, exportar) + modal de encuesta.
