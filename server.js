@@ -70,6 +70,12 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // ---- Iconos / imagenes ----
+    if (pathname === '/favicon.svg') return serveFile(res, 'favicon.svg', 'image/svg+xml');
+    if (pathname === '/favicon.ico' || pathname === '/favicon.png') return serveFile(res, 'favicon-256.png', 'image/png');
+    if (pathname === '/apple-touch-icon.png' || pathname === '/apple-touch-icon-precomposed.png') return serveFile(res, 'favicon-256.png', 'image/png');
+    if (pathname === '/og-image.png') return serveFile(res, 'og-image.png', 'image/png');
+
     // ---- Paginas ----
     if (pathname === '/' || pathname === '/index.html') return serveFile(res, 'index.html', 'text/html');
     if (pathname === '/admin' || pathname === '/admin.html') return serveFile(res, 'admin.html', 'text/html');
