@@ -19,15 +19,30 @@
     <meta name="twitter:title" content="MAVERIX - Creador de Mensajes">
     <meta name="twitter:description" content="Crea mensajes masivos personalizados desde un CSV en segundos.">
     <meta name="twitter:image" content="https://mensajesmasivos.bm6z1s.easypanel.host/og-image.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --indigo: #6366f1;
+            --indigo-2: #818cf8;
+            --mint: #34d399;      /* acento "completado / exito" */
+            --mint-2: #6ee7b7;
+            --ink: #e6e9ef;       /* texto principal mas claro */
+            --muted: #8b93a3;
+            --font-display: 'Space Grotesk', 'Segoe UI', sans-serif;
+            --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: var(--font-body);
             background: #0a0b10;
-            color: #c8cdd5;
+            color: #cdd2db;
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
         /* Gradient mesh background */
         body::before {
@@ -64,17 +79,19 @@
             padding: 48px 0 28px;
         }
         .header h1 {
-            font-size: 0.92rem;
-            font-weight: 400;
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            font-weight: 500;
             color: #7a8290;
-            letter-spacing: 4px;
+            letter-spacing: 5px;
             text-transform: uppercase;
         }
         .header .brand {
-            font-size: 3rem;
-            font-weight: 800;
-            letter-spacing: 10px;
-            margin-top: 6px;
+            font-family: var(--font-display);
+            font-size: 3.1rem;
+            font-weight: 700;
+            letter-spacing: 6px;
+            margin-top: 8px;
             background: linear-gradient(135deg, #fff 20%, #a5b4fc 60%, #818cf8 100%);
             -webkit-background-clip: text;
             background-clip: text;
@@ -100,9 +117,9 @@
             flex-shrink: 0; transition: all 0.4s; position: relative;
         }
         .progress .pnode.done {
-            background: linear-gradient(135deg, #6366f1, #818cf8);
+            background: linear-gradient(135deg, var(--mint), var(--mint-2));
             border-color: transparent;
-            box-shadow: 0 0 12px rgba(99,102,241,0.6);
+            box-shadow: 0 0 14px rgba(52,211,153,0.7);
         }
         .progress .pnode.done::after {
             content: ''; position: absolute; inset: 3px;
@@ -113,9 +130,9 @@
         }
         .progress .pbar > span {
             position: absolute; inset: 0; width: 0;
-            background: linear-gradient(90deg, #6366f1, #818cf8);
+            background: linear-gradient(90deg, var(--mint), var(--mint-2));
             transition: width 0.5s ease;
-            box-shadow: 0 0 8px rgba(99,102,241,0.5);
+            box-shadow: 0 0 8px rgba(52,211,153,0.5);
         }
         .progress .pbar.fill > span { width: 100%; }
 
@@ -140,13 +157,22 @@
         }
         .step:not(.disabled):hover::after { opacity: 1; }
         .step:not(.disabled):hover { border-color: rgba(99,102,241,0.25); }
+        /* Linea de acento al costado */
+        .step::before {
+            content: ''; position: absolute; left: 0; top: 20px; bottom: 20px; width: 3px;
+            border-radius: 0 3px 3px 0;
+            background: linear-gradient(180deg, var(--indigo), var(--indigo-2));
+            opacity: 0; transition: opacity 0.4s;
+        }
+        .step:not(.disabled)::before { opacity: 0.85; }
         .step.disabled { opacity: 0.3; pointer-events: none; transform: translateY(6px); filter: saturate(0.6); }
         h2 {
-            font-size: 0.84rem;
+            font-family: var(--font-display);
+            font-size: 1.02rem;
             font-weight: 600;
-            color: #aab1bd;
+            color: var(--ink);
             margin-bottom: 16px;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.2px;
             display: flex; align-items: center;
         }
         h2 .step-num {
@@ -203,7 +229,7 @@
         }
         .file-loaded.show { display: flex; align-items: center; gap: 14px; }
         .file-loaded .file-name { flex: 1; color: #4ade80; font-weight: 600; font-size: 0.95rem; }
-        .file-loaded .file-stats { color: #6b7280; font-size: 0.8rem; }
+        .file-loaded .file-stats { color: #6b7280; font-size: 0.78rem; font-family: var(--font-mono); }
         .btn-remove {
             background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.25);
             padding: 6px 14px; border-radius: 8px; cursor: pointer;
@@ -246,7 +272,7 @@
             font-weight: 600;
             box-shadow: 0 6px 20px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
         }
-        .chip .chip-count { opacity: 0.6; margin-left: 4px; font-size: 0.72rem; }
+        .chip .chip-count { opacity: 0.7; margin-left: 5px; font-size: 0.7rem; font-family: var(--font-mono); }
 
         /* Message template */
         .msg-area { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -262,11 +288,12 @@
             min-width: 200px; max-height: 240px; overflow-y: auto;
             background: #15171e; border-radius: 10px; padding: 12px; border: 1px solid #2d3140;
         }
-        .variables-panel p { font-size: 0.72rem; color: #4b5563; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .variables-panel p { font-family: var(--font-mono); font-size: 0.66rem; color: #5b6472; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
         .var-btn {
             display: inline-block; background: #1e2028; color: #9ca3af;
             border: 1px solid #2d3140; padding: 4px 10px; border-radius: 6px; margin: 2px;
-            cursor: pointer; font-size: 0.78rem; transition: all 0.15s;
+            cursor: pointer; font-size: 0.74rem; transition: all 0.15s;
+            font-family: var(--font-mono);
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
         .var-btn:hover { background: #2d3140; color: #fff; border-color: #4b5563; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
@@ -281,16 +308,18 @@
         .msg-preview strong { color: #a5b4fc; }
         .hint { font-size: 0.82rem; color: #6b7280; margin-bottom: 12px; line-height: 1.5; }
         .hint strong { color: #9ca3af; }
-        .hint code { color: #a5b4fc; background: #1e2028; padding: 2px 6px; border-radius: 4px; font-size: 0.78rem; }
+        .hint code { color: var(--mint-2); background: rgba(52,211,153,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.76rem; font-family: var(--font-mono); }
 
         /* Stats */
         .stats { font-size: 0.85rem; color: #6b7280; padding: 6px 0; }
-        .stats span { color: #a5b4fc; font-weight: 700; }
+        .stats span { color: var(--mint-2); font-weight: 700; font-family: var(--font-mono); }
 
         /* Buttons */
         .btn {
             padding: 14px 34px; border: none; border-radius: 12px;
+            font-family: var(--font-display);
             font-weight: 600; cursor: pointer; font-size: 0.94rem; transition: all 0.25s;
+            letter-spacing: 0.3px;
             position: relative; overflow: hidden;
         }
         .btn-export {
