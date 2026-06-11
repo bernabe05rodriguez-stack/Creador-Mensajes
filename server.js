@@ -26,6 +26,36 @@ function sendJSON(res, status, obj) {
     res.end(JSON.stringify(obj));
 }
 
+// ---- Rate limit simple en memoria: max 5 opiniones cada 10 minutos por IP ----
+const RATE_MAX = 5;
+const RATE_WINDOW_MS = 10 * 60 * 1000;
+const rateMap = new Map(); // ip -> [timestamps]
+
+function clientIP(req) {
+    // Detras del proxy de EasyPanel la IP real viene en x-forwarded-for
+    const fwd = req.headers['x-forwarded-for'];
+    if (fwd) return fwd.split(',')[0].trim();
+    return req.socket.remoteAddress || 'desconocida';
+}
+
+function rateLimited(ip) {
+    const now = Date.now();
+    const hits = (rateMap.get(ip) || []).filter(t => now - t < RATE_WINDOW_MS);
+    if (hits.length >= RATE_MAX) { rateMap.set(ip, hits); return true; }
+    hits.push(now);
+    rateMap.set(ip, hits);
+    return false;
+}
+
+// Limpieza periodica para que el mapa no crezca sin limite
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, hits] of rateMap) {
+        const fresh = hits.filter(t => now - t < RATE_WINDOW_MS);
+        if (fresh.length === 0) rateMap.delete(ip); else rateMap.set(ip, fresh);
+    }
+}, RATE_WINDOW_MS).unref();
+
 function serveFile(res, file, type) {
     fs.readFile(path.join(PUBLIC, file), (err, data) => {
         if (err) { res.writeHead(404); res.end('Not found'); return; }
@@ -38,11 +68,27 @@ const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://' + (req.headers.host || 'localhost'));
     const pathname = url.pathname;
 
+    // ---- Healthcheck ----
+    if (req.method === 'GET' && pathname === '/healthz') {
+        return sendJSON(res, 200, { ok: true });
+    }
+
     // ---- Guardar una opinion ----
     if (req.method === 'POST' && pathname === '/api/feedback') {
+        if (rateLimited(clientIP(req))) return sendJSON(res, 429, { error: 'demasiadas opiniones, proba mas tarde' });
         let body = '';
-        req.on('data', c => { body += c; if (body.length > 100000) req.destroy(); });
+        let tooBig = false;
+        req.on('data', c => {
+            if (tooBig) return;
+            body += c;
+            if (body.length > 10000) {
+                tooBig = true;
+                sendJSON(res, 413, { error: 'cuerpo demasiado grande' });
+                req.destroy();
+            }
+        });
         req.on('end', () => {
+            if (tooBig) return;
             let data;
             try { data = JSON.parse(body); } catch (e) { return sendJSON(res, 400, { error: 'JSON invalido' }); }
             const rating = parseInt(data.rating, 10);
