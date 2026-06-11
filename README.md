@@ -9,9 +9,9 @@ Incluye una encuesta de opinión **obligatoria antes de la primera descarga**, y
 
 ## Estructura
 
-- `index.html` — la app (subir CSV, armar mensaje, exportar) + modal de encuesta.
+- `index.html` — la app (subir CSV, armar mensaje, exportar) + modal de encuesta + tutorial "¿cómo funciona?" (links en tagline y footer).
 - `admin.html` — panel `/admin` para ver las opiniones (protegido por clave).
-- `server.js` — backend Node puro (sin dependencias): sirve las páginas y guarda/lee las opiniones.
+- `server.js` — backend Node puro (sin dependencias): sirve las páginas y guarda/lee las opiniones. Rate limit y healthcheck incluidos.
 - `Dockerfile` — para deploy en EasyPanel.
 
 ## Cómo funciona la encuesta
@@ -20,6 +20,14 @@ Incluye una encuesta de opinión **obligatoria antes de la primera descarga**, y
 2. Si nunca contestó la encuesta, aparece el modal: puntaje 1-5 (estrellas) + "¿Qué mejorarías o qué le falta?" (texto opcional). **La descarga recién ocurre al enviarla** ("ahora no" la cancela).
 3. Al enviar, el dato se guarda en el servidor (`POST /api/feedback`) y queda marcado en `localStorage` — las descargas siguientes son directas.
 4. Vos entrás a `/admin`, ponés la clave y ves total, promedio, distribución y todas las respuestas (cada una con día y hora).
+
+## Endpoints
+
+| Endpoint | Qué hace |
+|----------|----------|
+| `POST /api/feedback` | Guarda una opinión. Rate limit: 5 cada 10 minutos por IP. Body máximo 10KB (413 si se pasa). |
+| `GET /api/feedback?key=ADMIN_KEY` | Lee todas las opiniones (usado por `/admin`). |
+| `GET /healthz` | Healthcheck, responde `{"ok":true}`. |
 
 ## Variables de entorno
 
