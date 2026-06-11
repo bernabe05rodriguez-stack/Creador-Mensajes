@@ -1,9 +1,9 @@
-# Mensajes Masivos - MAVERIX
+# Creador-Mensajes - MAVERIX
 
 App web para generar CSV de mensajes masivos a partir de un "Informe de Cuentas.csv".
-Incluye una encuesta de opinión que se muestra tras descargar el archivo, y un panel `/admin` para ver las respuestas.
+Incluye una encuesta de opinión **obligatoria antes de la primera descarga**, y un panel `/admin` para ver las respuestas.
 
-**En vivo:** https://mensajesmasivos.bm6z1s.easypanel.host (panel en `/admin`)
+**En vivo:** https://creador-mensajes.bm6z1s.easypanel.host (panel en `/admin`)
 
 > ⚠️ Esta app **necesita el backend** (`server.js`) para guardar las opiniones. NO usar GitHub Pages (es estático y la encuesta no guarda). Pages quedó desactivado a propósito.
 
@@ -16,10 +16,10 @@ Incluye una encuesta de opinión que se muestra tras descargar el archivo, y un 
 
 ## Cómo funciona la encuesta
 
-1. La persona usa la app y descarga el CSV.
-2. Aparece un modal flotante: puntaje 1-5 (estrellas) + "¿Qué mejorarías o qué le falta?" (texto opcional).
-3. Al enviar, el dato se guarda en el servidor (`POST /api/feedback`).
-4. Vos entrás a `/admin`, ponés la clave y ves total, promedio, distribución y todas las respuestas.
+1. La persona usa la app y aprieta "descargar csv".
+2. Si nunca contestó la encuesta, aparece el modal: puntaje 1-5 (estrellas) + "¿Qué mejorarías o qué le falta?" (texto opcional). **La descarga recién ocurre al enviarla** ("ahora no" la cancela).
+3. Al enviar, el dato se guarda en el servidor (`POST /api/feedback`) y queda marcado en `localStorage` — las descargas siguientes son directas.
+4. Vos entrás a `/admin`, ponés la clave y ves total, promedio, distribución y todas las respuestas (cada una con día y hora).
 
 ## Variables de entorno
 
