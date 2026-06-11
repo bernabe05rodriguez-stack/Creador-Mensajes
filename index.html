@@ -467,7 +467,7 @@
         <div class="fb-modal">
             <div id="fbForm">
                 <h3>&iquest;qu&eacute; te pareci&oacute;?</h3>
-                <p class="fb-sub">Tu opini&oacute;n ayuda a mejorar la herramienta. Te lleva 10 segundos.</p>
+                <p class="fb-sub" id="fbSub">Tu opini&oacute;n ayuda a mejorar la herramienta. Te lleva 10 segundos.</p>
 
                 <div class="fb-label">&iquest;qu&eacute; tan &uacute;til te result&oacute;?</div>
                 <div class="fb-stars" id="fbStars">
@@ -778,7 +778,13 @@
         }
 
         // ========== EXPORT ==========
-        document.getElementById('btnExportCSV').addEventListener('click', exportCSV);
+        // La descarga queda bloqueada hasta que conteste la encuesta (una sola vez por navegador).
+        document.getElementById('btnExportCSV').addEventListener('click', () => {
+            if (!contactRows.length) { showToast('no hay telefonos para exportar'); return; }
+            if (fbAlreadySent()) { exportCSV(); return; }
+            pendingExport = true;
+            openFeedback(true);
+        });
 
         function exportCSV() {
             if (!contactRows.length) { showToast('no hay telefonos para exportar'); return; }
@@ -807,7 +813,6 @@
             exported = true;
             updateProgress();
             launchConfetti();
-            maybeShowFeedback();
         }
 
         // ========== FEEDBACK ==========
@@ -818,7 +823,13 @@
         const fbSkip = document.getElementById('fbSkip');
         const fbForm = document.getElementById('fbForm');
         const fbThanks = document.getElementById('fbThanks');
+        const fbSub = document.getElementById('fbSub');
         let fbRating = 0;
+        let pendingExport = false;
+
+        function fbAlreadySent() {
+            try { return !!localStorage.getItem('maverix_fb_sent'); } catch (e) { return false; }
+        }
 
         function paintStars() {
             fbStars.querySelectorAll('.fb-star').forEach(s => {
@@ -835,18 +846,23 @@
         });
         fbStars.addEventListener('mouseleave', paintStars);
 
-        function maybeShowFeedback() {
-            try { if (localStorage.getItem('maverix_fb_sent')) return; } catch (e) {}
-            setTimeout(() => fbOverlay.classList.add('show'), 600);
+        function closeFeedback() {
+            fbOverlay.classList.remove('show');
+            if (pendingExport) {
+                pendingExport = false;
+                showToast('contestá la encuesta para descargar el csv');
+            }
         }
-        function closeFeedback() { fbOverlay.classList.remove('show'); }
 
-        function openFeedback() {
+        function openFeedback(gating) {
             fbThanks.style.display = 'none';
             fbForm.style.display = '';
             fbRating = 0; paintStars();
             fbText.value = '';
             fbSend.disabled = true;
+            fbSub.textContent = gating
+                ? 'Para descargar tu archivo, contanos primero qué te pareció. Te lleva 10 segundos.'
+                : 'Tu opinión ayuda a mejorar la herramienta. Te lleva 10 segundos.';
             fbOverlay.classList.add('show');
         }
         const footerFeedback = document.getElementById('footerFeedback');
@@ -867,6 +883,7 @@
                 try { localStorage.setItem('maverix_fb_sent', '1'); } catch (e) {}
                 fbForm.style.display = 'none';
                 fbThanks.style.display = 'block';
+                if (pendingExport) { pendingExport = false; exportCSV(); }
                 setTimeout(closeFeedback, 2200);
             }).catch(() => {
                 fbSend.disabled = false;
