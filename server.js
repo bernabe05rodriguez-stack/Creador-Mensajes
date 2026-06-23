@@ -16,13 +16,18 @@ const ADMIN_KEY = process.env.ADMIN_KEY || 'cambiar-esta-clave';
 const DATA_FILE = path.join(DATA_DIR, 'feedback.jsonl');
 const PUBLIC = __dirname;
 
-// Asegurar carpeta de datos
+// Asegurar carpeta de datos (si falla, igual seguimos sirviendo la pagina)
 try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) {
     console.error('No se pudo crear DATA_DIR:', e.message);
 }
 
+// Ningun error inesperado tiene que tirar abajo el server. Loguear y seguir.
+process.on('uncaughtException', (e) => console.error('uncaughtException:', e && e.stack || e));
+process.on('unhandledRejection', (e) => console.error('unhandledRejection:', e && e.stack || e));
+
 function sendJSON(res, status, obj) {
-    res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+    if (res.headersSent) return;
+    res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(obj));
 }
 
@@ -34,7 +39,7 @@ const rateMap = new Map(); // ip -> [timestamps]
 function clientIP(req) {
     // Detras del proxy de EasyPanel la IP real viene en x-forwarded-for
     const fwd = req.headers['x-forwarded-for'];
-    if (fwd) return fwd.split(',')[0].trim();
+    if (fwd) return String(fwd).split(',')[0].trim();
     return req.socket.remoteAddress || 'desconocida';
 }
 
@@ -56,17 +61,38 @@ setInterval(() => {
     }
 }, RATE_WINDOW_MS).unref();
 
+// Cache-Control: HTML siempre fresco (asi un deploy se ve enseguida), assets cacheables
+function cacheHeaders(type) {
+    if (type.startsWith('text/html')) return 'no-cache';
+    if (type.startsWith('image/')) return 'public, max-age=86400';
+    return 'public, max-age=3600';
+}
+
 function serveFile(res, file, type) {
     fs.readFile(path.join(PUBLIC, file), (err, data) => {
-        if (err) { res.writeHead(404); res.end('Not found'); return; }
-        res.writeHead(200, { 'Content-Type': type + '; charset=utf-8' });
+        if (err) {
+            // Si ni siquiera el index.html esta, devolvemos un fallback minimo
+            // para que el usuario vea algo y no un 404 pelado.
+            if (res.headersSent) return;
+            res.writeHead(503, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+            res.end('<!doctype html><meta charset=utf-8><title>MAVERIX</title><body style="font-family:sans-serif;padding:40px;background:#0a0a0a;color:#eee"><h1>MAVERIX</h1><p>Volvé a intentar en unos segundos.</p>');
+            return;
+        }
+        if (res.headersSent) return;
+        res.writeHead(200, {
+            'Content-Type': type + (type.startsWith('image/') ? '' : '; charset=utf-8'),
+            'Cache-Control': cacheHeaders(type)
+        });
         res.end(data);
     });
 }
 
-const server = http.createServer((req, res) => {
-    const url = new URL(req.url, 'http://' + (req.headers.host || 'localhost'));
-    const pathname = url.pathname;
+function handle(req, res) {
+    let url;
+    try { url = new URL(req.url, 'http://' + (req.headers.host || 'localhost')); }
+    catch (e) { return serveFile(res, 'index.html', 'text/html'); }
+    // Normalizar trailing slash (excepto la raiz)
+    let pathname = url.pathname.replace(/\/+$/, '') || '/';
 
     // ---- Healthcheck ----
     if (req.method === 'GET' && pathname === '/healthz') {
@@ -87,6 +113,7 @@ const server = http.createServer((req, res) => {
                 req.destroy();
             }
         });
+        req.on('error', (e) => console.error('req error:', e.message));
         req.on('end', () => {
             if (tooBig) return;
             let data;
@@ -123,10 +150,26 @@ const server = http.createServer((req, res) => {
     if (pathname === '/og-image.png') return serveFile(res, 'og-image.png', 'image/png');
 
     // ---- Paginas ----
-    if (pathname === '/' || pathname === '/index.html') return serveFile(res, 'index.html', 'text/html');
     if (pathname === '/admin' || pathname === '/admin.html') return serveFile(res, 'admin.html', 'text/html');
 
-    res.writeHead(404); res.end('Not found');
+    // Cualquier otra ruta GET cae al index (asi nunca aparece "pagina no existe"
+    // si alguien comparte un link con sufijo raro o entra a una sub-ruta vieja).
+    if (req.method === 'GET') return serveFile(res, 'index.html', 'text/html');
+
+    sendJSON(res, 404, { error: 'no encontrado' });
+}
+
+const server = http.createServer((req, res) => {
+    try { handle(req, res); }
+    catch (e) {
+        console.error('handler error:', e && e.stack || e);
+        try { sendJSON(res, 500, { error: 'error interno' }); } catch (_) {}
+    }
+});
+
+server.on('clientError', (err, socket) => {
+    // No tirar el server por un cliente que manda basura
+    try { socket.end('HTTP/1.1 400 Bad Request\r\n\r\n'); } catch (_) {}
 });
 
 server.listen(PORT, () => {
@@ -134,3 +177,12 @@ server.listen(PORT, () => {
     console.log('Datos en: ' + DATA_FILE);
     if (ADMIN_KEY === 'cambiar-esta-clave') console.warn('!! ADMIN_KEY por defecto: cambiala en las env vars !!');
 });
+
+// Graceful shutdown (EasyPanel manda SIGTERM en restarts/deploys)
+function shutdown(sig) {
+    console.log('Recibido ' + sig + ', cerrando...');
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 5000).unref();
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
