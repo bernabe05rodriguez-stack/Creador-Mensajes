@@ -12,12 +12,12 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="maverix — creador de mensajes">
     <meta property="og:description" content="Generá mensajes masivos personalizados desde tu CSV en segundos.">
-    <meta property="og:image" content="https://creador-mensajes.bm6z1s.easypanel.host/og-image.png">
-    <meta property="og:url" content="https://creador-mensajes.bm6z1s.easypanel.host/">
+    <meta property="og:image" content="https://creador.fidelizador.online/og-image.png">
+    <meta property="og:url" content="https://creador.fidelizador.online/">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="maverix — creador de mensajes">
     <meta name="twitter:description" content="Generá mensajes masivos personalizados desde tu CSV en segundos.">
-    <meta name="twitter:image" content="https://creador-mensajes.bm6z1s.easypanel.host/og-image.png">
+    <meta name="twitter:image" content="https://creador.fidelizador.online/og-image.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -632,8 +632,6 @@
             const bars = document.querySelectorAll('#progress .pbar');
             nodes.forEach((n, i) => n.classList.toggle('done', !!done[i]));
             bars.forEach((b, i) => b.classList.toggle('fill', !!done[i + 1]));
-            const pl = document.getElementById('progressLabel');
-            if (pl) pl.innerHTML = '[ <b>' + String(done.filter(Boolean).length).padStart(2, '0') + '</b> / 05 ]';
         }
 
         // ========== UPLOAD ==========

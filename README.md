@@ -3,7 +3,7 @@
 App web para generar CSV de mensajes masivos a partir de un "Informe de Cuentas.csv".
 Incluye una encuesta de opinión **obligatoria antes de la primera descarga**, y un panel `/admin` para ver las respuestas.
 
-**En vivo:** https://creador-mensajes.bm6z1s.easypanel.host (panel en `/admin`)
+**En vivo:** https://creador.fidelizador.online (panel en `/admin`) — dominio propio en Hostinger; el viejo `*.easypanel.host` fue borrado y da 404.
 
 > ⚠️ Esta app **necesita el backend** (`server.js`) para guardar las opiniones. NO usar GitHub Pages (es estático y la encuesta no guarda). Pages quedó desactivado a propósito.
 
