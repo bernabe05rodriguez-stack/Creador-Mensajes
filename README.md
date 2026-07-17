@@ -1,7 +1,7 @@
 # Creador-Mensajes - MAVERIX
 
 App web para generar CSV de mensajes masivos a partir de un "Informe de Cuentas.csv".
-Incluye una encuesta de opinión **obligatoria antes de la primera descarga**, y un panel `/admin` para ver las respuestas.
+Al abrir la página pide el **usuario del ejecutivo** (autocompletado sobre una lista fija en `index.html`); ese nombre queda registrado en cada ingreso, cada descarga y en la calificación de la encuesta. Incluye una encuesta de opinión **obligatoria antes de la primera descarga**, y un panel `/admin` para ver quién usa la página y las respuestas.
 
 **En vivo:** https://creador.fidelizador.online (panel en `/admin`) — dominio propio en Hostinger; el viejo `*.easypanel.host` fue borrado y da 404.
 
@@ -25,8 +25,10 @@ Incluye una encuesta de opinión **obligatoria antes de la primera descarga**, y
 
 | Endpoint | Qué hace |
 |----------|----------|
-| `POST /api/feedback` | Guarda una opinión. Rate limit: 5 cada 10 minutos por IP. Body máximo 10KB (413 si se pasa). |
+| `POST /api/feedback` | Guarda una opinión (`rating`, `text`, `user`). Rate limit: 5 cada 10 minutos por IP. Body máximo 10KB (413 si se pasa). |
 | `GET /api/feedback?key=ADMIN_KEY` | Lee todas las opiniones (usado por `/admin`). |
+| `POST /api/usage` | Registra un evento de uso: `{user, event: "login"\|"download", rows?}`. Se guarda en `DATA_DIR/usage.jsonl`. Rate limit: 120 cada 10 min por IP. |
+| `GET /api/usage?key=ADMIN_KEY` | Lee todos los eventos de uso (usado por `/admin`). |
 | `GET /healthz` | Healthcheck, responde `{"ok":true}`. |
 
 ## Variables de entorno

@@ -14,6 +14,7 @@ const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || '/data';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'cambiar-esta-clave';
 const DATA_FILE = path.join(DATA_DIR, 'feedback.jsonl');
+const USAGE_FILE = path.join(DATA_DIR, 'usage.jsonl');
 const PUBLIC = __dirname;
 
 // Asegurar carpeta de datos (si falla, igual seguimos sirviendo la pagina)
@@ -35,6 +36,10 @@ function sendJSON(res, status, obj) {
 const RATE_MAX = 5;
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const rateMap = new Map(); // ip -> [timestamps]
+// Eventos de uso (login/descarga): limite mas holgado porque muchos ejecutivos
+// pueden salir a internet por el mismo IP de la oficina.
+const USAGE_RATE_MAX = 120;
+const usageRateMap = new Map();
 
 function clientIP(req) {
     // Detras del proxy de EasyPanel la IP real viene en x-forwarded-for
@@ -43,22 +48,25 @@ function clientIP(req) {
     return req.socket.remoteAddress || 'desconocida';
 }
 
-function rateLimited(ip) {
+function rateLimited(ip, map, max) {
+    map = map || rateMap; max = max || RATE_MAX;
     const now = Date.now();
-    const hits = (rateMap.get(ip) || []).filter(t => now - t < RATE_WINDOW_MS);
-    if (hits.length >= RATE_MAX) { rateMap.set(ip, hits); return true; }
+    const hits = (map.get(ip) || []).filter(t => now - t < RATE_WINDOW_MS);
+    if (hits.length >= max) { map.set(ip, hits); return true; }
     hits.push(now);
-    rateMap.set(ip, hits);
+    map.set(ip, hits);
     return false;
 }
 
-// Limpieza periodica para que el mapa no crezca sin limite
+// Limpieza periodica para que los mapas no crezcan sin limite
 setInterval(() => {
     const now = Date.now();
-    for (const [ip, hits] of rateMap) {
-        const fresh = hits.filter(t => now - t < RATE_WINDOW_MS);
-        if (fresh.length === 0) rateMap.delete(ip); else rateMap.set(ip, fresh);
-    }
+    [rateMap, usageRateMap].forEach(map => {
+        for (const [ip, hits] of map) {
+            const fresh = hits.filter(t => now - t < RATE_WINDOW_MS);
+            if (fresh.length === 0) map.delete(ip); else map.set(ip, fresh);
+        }
+    });
 }, RATE_WINDOW_MS).unref();
 
 // Cache-Control: HTML siempre fresco (asi un deploy se ve enseguida), assets cacheables
@@ -121,11 +129,59 @@ function handle(req, res) {
             const rating = parseInt(data.rating, 10);
             if (!(rating >= 1 && rating <= 5)) return sendJSON(res, 400, { error: 'rating invalido' });
             const text = String(data.text || '').slice(0, 2000);
-            const entry = { ts: new Date().toISOString(), rating: rating, text: text };
+            const user = String(data.user || '').trim().toLowerCase().slice(0, 40);
+            const entry = { ts: new Date().toISOString(), rating: rating, text: text, user: user };
             fs.appendFile(DATA_FILE, JSON.stringify(entry) + '\n', err => {
                 if (err) { console.error('Error guardando:', err.message); return sendJSON(res, 500, { error: 'no se pudo guardar' }); }
                 sendJSON(res, 200, { ok: true });
             });
+        });
+        return;
+    }
+
+    // ---- Registrar uso: quien abre la pagina (login) y quien descarga (download) ----
+    if (req.method === 'POST' && pathname === '/api/usage') {
+        if (rateLimited(clientIP(req), usageRateMap, USAGE_RATE_MAX)) return sendJSON(res, 429, { error: 'demasiados eventos' });
+        let body = '';
+        let tooBig = false;
+        req.on('data', c => {
+            if (tooBig) return;
+            body += c;
+            if (body.length > 2000) {
+                tooBig = true;
+                sendJSON(res, 413, { error: 'cuerpo demasiado grande' });
+                req.destroy();
+            }
+        });
+        req.on('error', (e) => console.error('req error:', e.message));
+        req.on('end', () => {
+            if (tooBig) return;
+            let data;
+            try { data = JSON.parse(body); } catch (e) { return sendJSON(res, 400, { error: 'JSON invalido' }); }
+            const user = String(data.user || '').trim().toLowerCase().slice(0, 40);
+            const event = String(data.event || '');
+            if (!user || !/^[a-z]+$/.test(user)) return sendJSON(res, 400, { error: 'usuario invalido' });
+            if (event !== 'login' && event !== 'download') return sendJSON(res, 400, { error: 'evento invalido' });
+            const entry = { ts: new Date().toISOString(), user: user, event: event };
+            const rows = parseInt(data.rows, 10);
+            if (event === 'download' && rows >= 0) entry.rows = rows;
+            fs.appendFile(USAGE_FILE, JSON.stringify(entry) + '\n', err => {
+                if (err) { console.error('Error guardando uso:', err.message); return sendJSON(res, 500, { error: 'no se pudo guardar' }); }
+                sendJSON(res, 200, { ok: true });
+            });
+        });
+        return;
+    }
+
+    // ---- Leer usos (solo con clave) ----
+    if (req.method === 'GET' && pathname === '/api/usage') {
+        if (url.searchParams.get('key') !== ADMIN_KEY) return sendJSON(res, 401, { error: 'no autorizado' });
+        fs.readFile(USAGE_FILE, 'utf8', (err, content) => {
+            if (err) return sendJSON(res, 200, { events: [] }); // todavia no hay archivo
+            const events = content.split('\n').filter(Boolean).map(l => {
+                try { return JSON.parse(l); } catch (e) { return null; }
+            }).filter(Boolean);
+            sendJSON(res, 200, { events: events });
         });
         return;
     }

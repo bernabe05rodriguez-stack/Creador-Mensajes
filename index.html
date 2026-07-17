@@ -333,6 +333,28 @@
         .fb-thanks .fb-check { font-family: var(--mono); font-size: 2rem; color: var(--acid); margin-bottom: 10px; }
         .fb-thanks h3 { font-family: var(--mono); margin-bottom: 6px; color: var(--ink); }
 
+        /* ===== Gate de ejecutivo (quien usa la pagina) ===== */
+        .gate-modal { max-width: 420px; }
+        .ac-wrap { position: relative; margin-bottom: 6px; }
+        .ac-wrap input {
+            width: 100%; background: var(--bg-2); color: var(--ink);
+            border: 1px solid var(--line-2); border-radius: 7px; padding: 13px 14px;
+            font-family: var(--mono); font-size: 0.95rem; letter-spacing: 0.5px;
+        }
+        .ac-wrap input::placeholder { color: var(--faint); }
+        .ac-wrap input:focus { outline: none; border-color: var(--acid); box-shadow: 0 0 0 3px rgba(198,255,58,0.12); }
+        .ac-list {
+            position: absolute; left: 0; right: 0; top: calc(100% + 5px); z-index: 20;
+            background: var(--surface); border: 1px solid var(--line-2); border-radius: 7px;
+            max-height: 216px; overflow-y: auto; display: none;
+            box-shadow: 0 18px 44px rgba(0,0,0,0.75);
+        }
+        .ac-list.show { display: block; }
+        .ac-item { font-family: var(--mono); font-size: 0.86rem; color: var(--muted); padding: 9px 14px; cursor: pointer; }
+        .ac-item b { color: var(--acid); font-weight: 600; }
+        .ac-item:hover, .ac-item.sel { background: rgba(198,255,58,0.09); color: var(--ink); }
+        .gate-err { color: var(--danger); font-family: var(--mono); font-size: 0.78rem; min-height: 20px; margin: 4px 0 8px; }
+
         /* ===== Tutorial modal ===== */
         .tut-link { font-family: var(--mono); color: var(--faint); text-decoration: none; transition: color 0.2s; white-space: nowrap; }
         .tut-link:hover { color: var(--acid); }
@@ -480,10 +502,30 @@
             <a href="#" id="footerTutorial" class="footer-link">cómo funciona</a>
             <span class="sep">·</span>
             <a href="#" id="footerFeedback" class="footer-link">mejoras o sugerencias</a>
+            <span class="sep">·</span>
+            <span>ejecutivo: <b id="footerUserName">&mdash;</b></span>
+            <a href="#" id="footerUserChange" class="footer-link">cambiar</a>
         </div>
     </div>
 
     <div class="toast" id="toast"></div>
+
+    <!-- Gate: quien va a usar la pagina -->
+    <div class="fb-overlay" id="gateOverlay">
+        <div class="fb-modal gate-modal">
+            <h3>&iquest;qui&eacute;n va a usar maverix?</h3>
+            <p class="fb-sub">Escrib&iacute; tu usuario de ejecutivo &mdash; con las primeras letras se autocompleta.</p>
+            <div class="fb-label">usuario</div>
+            <div class="ac-wrap">
+                <input type="text" id="gateInput" placeholder="ej: pgarma" autocomplete="off" autocapitalize="off" spellcheck="false">
+                <div class="ac-list" id="gateList"></div>
+            </div>
+            <div class="gate-err" id="gateErr"></div>
+            <div class="fb-actions">
+                <button class="btn-send" id="gateGo" disabled>continuar</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Tutorial modal -->
     <div class="fb-overlay" id="tutOverlay">
@@ -865,6 +907,7 @@
             a.click();
             URL.revokeObjectURL(url);
             showToast('csv descargado · ' + contactRows.length + ' telefonos');
+            logUsage('download', { rows: contactRows.length });
             exported = true;
             updateProgress();
             launchConfetti();
@@ -964,7 +1007,7 @@
             fetch(FEEDBACK_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rating: fbRating, text: fbText.value.trim() }),
+                body: JSON.stringify({ rating: fbRating, text: fbText.value.trim(), user: currentUser }),
                 signal: ctrl ? ctrl.signal : undefined
             }).then(r => {
                 if (timer) clearTimeout(timer);
@@ -1004,6 +1047,140 @@
             t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 3000);
         }
+
+        // ========== GATE DE EJECUTIVO ==========
+        // Lista de usuarios validos. El modal de entrada solo deja pasar nombres de aca.
+        const EJECUTIVOS = [
+            'yaccetta','sacevedo','pacosta','galmonacid','naloy','valtamiranda','ganselmi','capoud',
+            'carevalo','larevalo','jarzalluz','favena','eaveni','fbaldasso','jbarcelo','gbarmat',
+            'vbartolome','jbecerra','nberardo','gbertani','fberte','abiglia','mbiglia','cblasco',
+            'mboulin','vbracco','cbustamante','dbustos','vcabero','scacciaguerra','acalise','lcamargo',
+            'bcantoro','ecardozo','scardozo','mcarreras','scarretero','mcastellanos','fcavallo','jchavez',
+            'cchavez','nchiaraviglio','cchiarello','achiarello','gcomandini','ccomandini','mcorengia','jcoria',
+            'mcorrea','ccorsino','mcortez','acorti','mcuervo','bdeantonio','gdediego','bdelacruz',
+            'fderosas','mdelmoral','gdelerba','jdelledonne','fdemierre','edengra','bdiaz','vdiaz',
+            'cdiazguinazu','mdiazguinazu','vdiconto','odimartino','adominguezsoler','bdominguez','ldominguez','mdominguez',
+            'aduperut','jelizalde','eelvira','lescudero','rescudero','mescudero','nesnaola','meyub',
+            'mfarah','jfenollar','kferiozzi','ffernandez','lfernandez','afernandez','mtfernandez','rfernandez',
+            'aferreria','mfonzalida','lgaldamez','egalfo','lganem','bgarcia','mgarcia','jgarcia',
+            'pgarma','vgiaquinta','igiaquinta','fgilabert','sgodoy','mjbalmaceda','mgongora','fgonzalez',
+            'mgonzalezencina','mvgonzalez','rmgonzalez','pgonzalez','tgonzalez','rgonzalez','mguevara','jguiroy',
+            'dguzman','mhaddad','ghidalgo','gibanez','ljimenez','mjora','jjora','rlanzotti',
+            'alauria','mlecea','clelio','lliviero','flobos','dlopez','jlopez','llucero',
+            'mmafferra','rmaldonado','emallah','pmallah','lmansur','nmanzanarez','amartin','cmartinez',
+            'jmartinez','rmas','jfmendez','gmendez','mmoretti','rmorichetti','mmunoz','dnaselli',
+            'mnassivera','mochoa','lolivos','ppacheco','epayola','jmpaz','pperello','fperez',
+            'pazp','jpolvorinos','aquinonez','mquiroga','aquispe','jpramos','craviolo','lreynoso',
+            'lrizzo','hrobello','drocher','frodriguez','jorodriguez','jrodriguez','rrodriguez','vrodriguez',
+            'mayrodriguez','brodriguez','lrodriguez','mrojas','jrojas','broldan','arosa','jruiz',
+            'msalazar','dsalomon','msanchez','misanchez','isantolin','nsarmiento','tsayavedra','csayavedra',
+            'jscalia','mmanlio','jsese','fsevilla','asola','gsosa','esoto','sspedaletti',
+            'mstaiti','jtixeira','stognion','ctorres','atorres','gtrabazo','btripodi','iunderwood',
+            'svallone','lvalverde','mvanrell','mvega','cvicchi','svictoria','tvidela','eviel',
+            'avillanueva','vvillazon','fviscarra','sweigandt','lzabalegui','jzamora','jzupo'
+        ];
+
+        let currentUser = '';
+        try { currentUser = (localStorage.getItem('maverix_user') || '').toLowerCase(); } catch (e) {}
+        if (EJECUTIVOS.indexOf(currentUser) === -1) currentUser = '';
+
+        const gateOverlay = document.getElementById('gateOverlay');
+        const gateInput = document.getElementById('gateInput');
+        const gateList = document.getElementById('gateList');
+        const gateGo = document.getElementById('gateGo');
+        const gateErr = document.getElementById('gateErr');
+        const footerUserName = document.getElementById('footerUserName');
+        let acMatches = [];
+        let acSel = -1;
+
+        // Registrar un evento de uso en el backend. Si falla, no molesta al usuario.
+        function logUsage(event, extra) {
+            if (!currentUser) return;
+            try {
+                fetch('/api/usage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Object.assign({ user: currentUser, event: event }, extra || {}))
+                }).catch(() => {});
+            } catch (e) {}
+        }
+
+        function paintFooterUser() { footerUserName.textContent = currentUser || '—'; }
+
+        function hideAc() { gateList.classList.remove('show'); gateList.innerHTML = ''; acMatches = []; acSel = -1; }
+
+        function paintAcSel() {
+            gateList.querySelectorAll('.ac-item').forEach((el, i) => el.classList.toggle('sel', i === acSel));
+            const sel = gateList.querySelector('.ac-item.sel');
+            if (sel && sel.scrollIntoView) sel.scrollIntoView({ block: 'nearest' });
+        }
+
+        function pickAc(name) {
+            gateInput.value = name;
+            hideAc();
+            gateGo.disabled = false;
+            gateErr.textContent = '';
+            gateInput.focus();
+        }
+
+        function renderAc() {
+            const q = gateInput.value.trim().toLowerCase();
+            gateGo.disabled = EJECUTIVOS.indexOf(q) === -1;
+            gateErr.textContent = '';
+            if (!q) { hideAc(); return; }
+            acMatches = EJECUTIVOS.filter(n => n.indexOf(q) === 0);
+            if (!acMatches.length || (acMatches.length === 1 && acMatches[0] === q)) { hideAc(); return; }
+            acSel = -1;
+            gateList.innerHTML = acMatches.map(n =>
+                '<div class="ac-item" data-name="' + n + '"><b>' + n.slice(0, q.length) + '</b>' + n.slice(q.length) + '</div>'
+            ).join('');
+            gateList.classList.add('show');
+            gateList.querySelectorAll('.ac-item').forEach(el => {
+                el.addEventListener('mousedown', e => { e.preventDefault(); pickAc(el.dataset.name); });
+            });
+        }
+
+        function confirmGate() {
+            const name = gateInput.value.trim().toLowerCase();
+            if (EJECUTIVOS.indexOf(name) === -1) {
+                gateErr.textContent = 'ese usuario no está en la lista. escribí las primeras letras y elegilo.';
+                return;
+            }
+            currentUser = name;
+            try { localStorage.setItem('maverix_user', name); } catch (e) {}
+            paintFooterUser();
+            gateOverlay.classList.remove('show');
+            logUsage('login');
+        }
+
+        function openGate() {
+            gateInput.value = currentUser || '';
+            gateGo.disabled = !currentUser;
+            gateErr.textContent = '';
+            hideAc();
+            gateOverlay.classList.add('show');
+            setTimeout(() => { gateInput.focus(); gateInput.select(); }, 120);
+        }
+
+        gateInput.addEventListener('input', renderAc);
+        gateInput.addEventListener('keydown', e => {
+            if (e.key === 'ArrowDown' && acMatches.length) { e.preventDefault(); acSel = (acSel + 1) % acMatches.length; paintAcSel(); }
+            else if (e.key === 'ArrowUp' && acMatches.length) { e.preventDefault(); acSel = (acSel - 1 + acMatches.length) % acMatches.length; paintAcSel(); }
+            else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (acSel >= 0 && acMatches[acSel]) pickAc(acMatches[acSel]);
+                else if (acMatches.length === 1) pickAc(acMatches[0]);
+                else confirmGate();
+            }
+            else if (e.key === 'Escape') { hideAc(); }
+        });
+        gateGo.addEventListener('click', confirmGate);
+        const footerUserChange = document.getElementById('footerUserChange');
+        if (footerUserChange) footerUserChange.addEventListener('click', e => { e.preventDefault(); openGate(); });
+
+        // Al abrir la pagina siempre se pide el ejecutivo (si ya uso maverix, viene precargado).
+        paintFooterUser();
+        openGate();
 
         // ========== EFFECTS ==========
         function launchConfetti() {

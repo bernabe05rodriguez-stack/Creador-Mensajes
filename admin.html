@@ -96,6 +96,18 @@
         .resp-stars { color: var(--amber); font-size: 0.95rem; letter-spacing: 2px; }
         .resp-stars .off { color: #2a2a2a; }
         .resp-date { font-family: var(--mono); color: var(--faint); font-size: 0.74rem; }
+        .resp-user { font-family: var(--mono); color: var(--acid); font-size: 0.76rem; margin-right: 12px; }
+        .resp-user::before { content: '@'; color: var(--faint); }
+
+        /* Tabla de usos */
+        .utable-wrap { overflow-x: auto; }
+        .utable { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.8rem; }
+        .utable th { text-align: left; color: var(--faint); font-weight: 500; text-transform: uppercase; letter-spacing: 1.2px; font-size: 0.62rem; padding: 8px 10px; border-bottom: 1px solid var(--line-2); white-space: nowrap; }
+        .utable td { padding: 8px 10px; border-bottom: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+        .utable tr:last-child td { border-bottom: none; }
+        .utable td.u { color: var(--acid); }
+        .utable td.n { text-align: right; }
+        .utable th.n { text-align: right; }
         .resp-text { color: var(--ink); font-size: 0.9rem; line-height: 1.55; white-space: pre-wrap; }
         .resp-text.empty { color: var(--faint); font-style: italic; }
         .empty-state { font-family: var(--mono); text-align: center; color: var(--faint); padding: 40px 0; }
@@ -138,9 +150,15 @@
                 <button class="btn-sm" id="refreshBtn">actualizar</button>
             </div>
             <div class="stats-row">
+                <div class="stat"><div class="num" id="stUsers">0</div><div class="lbl">ejecutivos</div></div>
+                <div class="stat"><div class="num" id="stDownloads">0</div><div class="lbl">descargas</div></div>
                 <div class="stat"><div class="num" id="stTotal">0</div><div class="lbl">respuestas</div></div>
                 <div class="stat"><div class="num amber" id="stAvg">-</div><div class="lbl">promedio</div></div>
                 <div class="stat"><div class="num" id="stWithText">0</div><div class="lbl">con comentario</div></div>
+            </div>
+            <div class="card">
+                <div class="list-title" style="margin-top:0;">quién usa la página · más recientes primero</div>
+                <div class="utable-wrap" id="usageWrap"></div>
             </div>
             <div class="card">
                 <div class="list-title" style="margin-top:0;">distribución de puntajes</div>
@@ -185,7 +203,7 @@
             requestAnimationFrame(tick);
         }
 
-        function render(responses) {
+        function render(responses, events) {
             responses.sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
             const total = responses.length;
             const sum = responses.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
@@ -196,6 +214,40 @@
             if (total) countUp(document.getElementById('stAvg'), avg, ' ★', 1);
             else document.getElementById('stAvg').textContent = '-';
             countUp(document.getElementById('stWithText'), withText, '', 0);
+
+            // ---- Usos por ejecutivo ----
+            events = events || [];
+            const perUser = {};
+            let downloads = 0;
+            events.forEach(ev => {
+                if (!ev.user) return;
+                const u = perUser[ev.user] || (perUser[ev.user] = { logins: 0, downloads: 0, rows: 0, last: '' });
+                if (ev.event === 'download') { u.downloads++; downloads++; u.rows += Number(ev.rows) || 0; }
+                else u.logins++;
+                if ((ev.ts || '') > u.last) u.last = ev.ts || '';
+            });
+            // Calificacion de cada ejecutivo (la mas reciente que dejo en la encuesta)
+            responses.forEach(r => {
+                if (r.user && perUser[r.user] && perUser[r.user].rating === undefined) perUser[r.user].rating = Number(r.rating);
+            });
+            const users = Object.keys(perUser).sort((a, b) => perUser[b].last.localeCompare(perUser[a].last));
+            countUp(document.getElementById('stUsers'), users.length, '', 0);
+            countUp(document.getElementById('stDownloads'), downloads, '', 0);
+            const usageWrap = document.getElementById('usageWrap');
+            if (!users.length) {
+                usageWrap.innerHTML = '<div class="empty-state">todavía no hay usos registrados.</div>';
+            } else {
+                usageWrap.innerHTML = '<table class="utable"><tr><th>ejecutivo</th><th class="n">ingresos</th><th class="n">descargas</th><th class="n">filas exportadas</th><th>calificación</th><th>último uso</th></tr>'
+                    + users.map(name => {
+                        const u = perUser[name];
+                        return '<tr><td class="u">' + escHtml(name) + '</td>'
+                            + '<td class="n">' + u.logins + '</td>'
+                            + '<td class="n">' + u.downloads + '</td>'
+                            + '<td class="n">' + u.rows + '</td>'
+                            + '<td class="resp-stars">' + (u.rating ? stars(u.rating) : '<span style="color:var(--faint)">—</span>') + '</td>'
+                            + '<td>' + fmtDate(u.last) + '</td></tr>';
+                    }).join('') + '</table>';
+            }
 
             // Distribucion 5 -> 1
             const counts = {1:0,2:0,3:0,4:0,5:0};
@@ -218,20 +270,27 @@
                     ? '<div class="resp-text">' + escHtml(r.text) + '</div>'
                     : '<div class="resp-text empty">(sin comentario)</div>';
                 return '<div class="resp"><div class="resp-head">'
-                    + '<span class="resp-stars">' + stars(Number(r.rating)) + '</span>'
+                    + '<span><span class="resp-stars">' + stars(Number(r.rating)) + '</span>'
+                    + (r.user ? '<span class="resp-user" style="margin-left:12px;">' + escHtml(r.user) + '</span>' : '') + '</span>'
                     + '<span class="resp-date">' + fmtDate(r.ts) + '</span></div>'
                     + txt + '</div>';
             }).join('');
         }
 
         function load() {
-            return fetch('/api/feedback?key=' + encodeURIComponent(adminKey))
+            const k = encodeURIComponent(adminKey);
+            return fetch('/api/feedback?key=' + k)
                 .then(r => {
                     if (r.status === 401) { throw new Error('clave'); }
                     if (!r.ok) throw new Error('server');
                     return r.json();
                 })
-                .then(data => { render(data.responses || []); });
+                .then(data =>
+                    fetch('/api/usage?key=' + k)
+                        .then(r => r.ok ? r.json() : { events: [] })
+                        .catch(() => ({ events: [] }))
+                        .then(u => { render(data.responses || [], u.events || []); })
+                );
         }
 
         function doLogin() {
