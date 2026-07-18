@@ -108,6 +108,16 @@
         .utable td.u { color: var(--acid); }
         .utable td.n { text-align: right; }
         .utable th.n { text-align: right; }
+        .utable tr.urow { cursor: pointer; }
+        .utable tr.urow:hover td { background: rgba(198,255,58,0.04); }
+        .utable td.tgl { color: var(--faint); width: 20px; padding-right: 0; }
+        .utable tr.udetail td { background: var(--bg-2); white-space: normal; padding: 14px 16px 16px 34px; }
+        .utable tr.udetail.hidden { display: none; }
+        .dtitle { font-family: var(--mono); font-size: 0.62rem; color: var(--faint); text-transform: uppercase; letter-spacing: 1.5px; margin: 10px 0 6px; }
+        .dtitle:first-child { margin-top: 0; }
+        .dline { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); padding: 2px 0; line-height: 1.6; }
+        .dline .dts { color: var(--faint); }
+        .dline .ddl { color: var(--acid); }
         .resp-text { color: var(--ink); font-size: 0.9rem; line-height: 1.55; white-space: pre-wrap; }
         .resp-text.empty { color: var(--faint); font-style: italic; }
         .empty-state { font-family: var(--mono); text-align: center; color: var(--faint); padding: 40px 0; }
@@ -157,7 +167,7 @@
                 <div class="stat"><div class="num" id="stWithText">0</div><div class="lbl">con comentario</div></div>
             </div>
             <div class="card">
-                <div class="list-title" style="margin-top:0;">quién usa la página · más recientes primero</div>
+                <div class="list-title" style="margin-top:0;">quién usa la página · más recientes primero · click en un ejecutivo para ver su detalle</div>
                 <div class="utable-wrap" id="usageWrap"></div>
             </div>
             <div class="card">
@@ -221,10 +231,15 @@
             let downloads = 0;
             events.forEach(ev => {
                 if (!ev.user) return;
-                const u = perUser[ev.user] || (perUser[ev.user] = { logins: 0, downloads: 0, rows: 0, last: '' });
+                const u = perUser[ev.user] || (perUser[ev.user] = { logins: 0, downloads: 0, rows: 0, last: '', events: [] });
                 if (ev.event === 'download') { u.downloads++; downloads++; u.rows += Number(ev.rows) || 0; }
                 else u.logins++;
+                u.events.push(ev);
                 if ((ev.ts || '') > u.last) u.last = ev.ts || '';
+            });
+            // Ejecutivos que solo dejaron opinion (sin eventos de uso registrados)
+            responses.forEach(r => {
+                if (r.user && !perUser[r.user]) perUser[r.user] = { logins: 0, downloads: 0, rows: 0, last: r.ts || '', events: [] };
             });
             // Calificacion de cada ejecutivo (la mas reciente que dejo en la encuesta)
             responses.forEach(r => {
@@ -237,16 +252,46 @@
             if (!users.length) {
                 usageWrap.innerHTML = '<div class="empty-state">todavía no hay usos registrados.</div>';
             } else {
-                usageWrap.innerHTML = '<table class="utable"><tr><th>ejecutivo</th><th class="n">ingresos</th><th class="n">descargas</th><th class="n">filas exportadas</th><th>calificación</th><th>último uso</th></tr>'
+                usageWrap.innerHTML = '<table class="utable"><tr><th></th><th>ejecutivo</th><th class="n">ingresos</th><th class="n">descargas</th><th class="n">filas exportadas</th><th>calificación</th><th>último uso</th></tr>'
                     + users.map(name => {
                         const u = perUser[name];
-                        return '<tr><td class="u">' + escHtml(name) + '</td>'
+                        u.events.sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
+                        const shown = u.events.slice(0, 30);
+                        const evList = shown.map(ev =>
+                            '<div class="dline"><span class="dts">' + fmtDate(ev.ts) + '</span> · '
+                            + (ev.event === 'download'
+                                ? '<span class="ddl">descargó el csv' + (ev.rows ? ' (' + ev.rows + ' filas)' : '') + '</span>'
+                                : 'ingresó a la página')
+                            + '</div>'
+                        ).join('') || '<div class="dline" style="color:var(--faint)">sin eventos registrados.</div>';
+                        const evMore = u.events.length > shown.length
+                            ? '<div class="dline" style="color:var(--faint)">… y ' + (u.events.length - shown.length) + ' eventos más viejos.</div>' : '';
+                        const myResps = responses.filter(r => r.user === name);
+                        const respList = myResps.length
+                            ? myResps.map(r =>
+                                '<div class="dline"><span class="dts">' + fmtDate(r.ts) + '</span> · <span class="resp-stars">' + stars(Number(r.rating)) + '</span>'
+                                + (r.text && r.text.trim() ? ' — ' + escHtml(r.text) : ' <span style="color:var(--faint)">(sin comentario)</span>')
+                                + '</div>').join('')
+                            : '<div class="dline" style="color:var(--faint)">todavía no dejó calificación.</div>';
+                        return '<tr class="urow"><td class="tgl">▸</td><td class="u">' + escHtml(name) + '</td>'
                             + '<td class="n">' + u.logins + '</td>'
                             + '<td class="n">' + u.downloads + '</td>'
                             + '<td class="n">' + u.rows + '</td>'
                             + '<td class="resp-stars">' + (u.rating ? stars(u.rating) : '<span style="color:var(--faint)">—</span>') + '</td>'
-                            + '<td>' + fmtDate(u.last) + '</td></tr>';
+                            + '<td>' + fmtDate(u.last) + '</td></tr>'
+                            + '<tr class="udetail hidden"><td colspan="7">'
+                            + '<div class="dtitle">// actividad</div>' + evList + evMore
+                            + '<div class="dtitle">// calificación y comentarios</div>' + respList
+                            + '</td></tr>';
                     }).join('') + '</table>';
+                usageWrap.querySelectorAll('tr.urow').forEach(tr => {
+                    tr.addEventListener('click', () => {
+                        const det = tr.nextElementSibling;
+                        if (!det) return;
+                        det.classList.toggle('hidden');
+                        tr.querySelector('.tgl').textContent = det.classList.contains('hidden') ? '▸' : '▾';
+                    });
+                });
             }
 
             // Distribucion 5 -> 1

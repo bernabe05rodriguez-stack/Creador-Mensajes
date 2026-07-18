@@ -927,8 +927,11 @@
         let fbRating = 0;
         let pendingExport = false;
 
+        // La encuesta es POR EJECUTIVO: cada usuario la contesta una vez
+        // (antes era por navegador y en maquinas compartidas quedaba mal atribuida).
+        function fbSentKey() { return 'maverix_fb_sent_' + (currentUser || 'anon'); }
         function fbAlreadySent() {
-            try { return !!localStorage.getItem('maverix_fb_sent'); } catch (e) { return false; }
+            try { return !!localStorage.getItem(fbSentKey()); } catch (e) { return false; }
         }
 
         function paintStars() {
@@ -988,7 +991,7 @@
         let fbFailCount = 0;
 
         function fbDoneAndMaybeExport(localOnly) {
-            try { localStorage.setItem('maverix_fb_sent', '1'); } catch (e) {}
+            try { localStorage.setItem(fbSentKey(), '1'); } catch (e) {}
             fbForm.style.display = 'none';
             fbThanks.style.display = 'block';
             if (localOnly) {
