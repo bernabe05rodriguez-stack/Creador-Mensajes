@@ -364,11 +364,10 @@
             background: var(--acid-dim); border: 1px dashed rgba(198,255,58,0.5); border-radius: 7px;
             padding: 14px 16px; cursor: pointer; display: flex; justify-content: space-between;
             align-items: center; gap: 10px; letter-spacing: 0.5px; transition: all 0.2s; user-select: all;
+            margin-bottom: 24px;
         }
         .don-alias:hover { border-style: solid; box-shadow: 0 0 18px rgba(198,255,58,0.25); }
         .don-copy { font-size: 0.7rem; color: var(--muted); font-weight: 400; white-space: nowrap; }
-        .don-note { font-family: var(--mono); font-size: 0.7rem; color: var(--faint); margin: 10px 0 20px; line-height: 1.6; }
-        .don-note::before { content: '// '; }
 
         /* ===== Tutorial modal ===== */
         .tut-link { font-family: var(--mono); color: var(--faint); text-decoration: none; transition: color 0.2s; white-space: nowrap; }
@@ -529,10 +528,8 @@
     <div class="fb-overlay" id="donOverlay">
         <div class="fb-modal">
             <h3>maverix es gratis &mdash; mantenerlo, no</h3>
-            <p class="fb-sub">Este programa se mantiene con donaciones. Si te ahorra laburo todos los d&iacute;as, bancalo con lo que quieras: con el precio de un caf&eacute; ya ayud&aacute;s un mont&oacute;n.</p>
-            <div class="fb-label">don&aacute; al alias</div>
-            <div class="don-alias" id="donAlias">palta.camote.mp<span class="don-copy">[ tocar para copiar ]</span></div>
-            <p class="don-note">funciona desde Mercado Pago o cualquier banco &middot; transfer&iacute;s al alias y listo</p>
+            <p class="fb-sub">Bancalo con lo que quieras al alias:</p>
+            <div class="don-alias" id="donAlias">palta.camote.mp<span class="don-copy">[ copiar ]</span></div>
             <div class="fb-actions">
                 <button class="btn-send" id="donGo">ya don&eacute; &middot; descargar</button>
             </div>
