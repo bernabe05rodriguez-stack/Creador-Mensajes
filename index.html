@@ -368,6 +368,8 @@
         }
         .don-alias:hover { border-style: solid; box-shadow: 0 0 18px rgba(198,255,58,0.25); }
         .don-copy { font-size: 0.7rem; color: var(--muted); font-weight: 400; white-space: nowrap; }
+        .don-cancel { background: none; border: none; color: var(--faint); font-family: var(--mono); font-size: 0.74rem; cursor: pointer; padding: 10px 12px; transition: color 0.2s; }
+        .don-cancel:hover { color: var(--muted); }
 
         /* ===== Tutorial modal ===== */
         .tut-link { font-family: var(--mono); color: var(--faint); text-decoration: none; transition: color 0.2s; white-space: nowrap; }
@@ -531,6 +533,7 @@
             <p class="fb-sub">Banc&aacute; donando lo que puedas al alias:</p>
             <div class="don-alias" id="donAlias">palta.camote.mp<span class="don-copy">[ copiar ]</span></div>
             <div class="fb-actions">
+                <button class="don-cancel" id="donCancel">cancelar</button>
                 <button class="btn-send" id="donGo">descargar</button>
             </div>
         </div>
@@ -934,6 +937,9 @@
         document.getElementById('donGo').addEventListener('click', () => {
             donOverlay.classList.remove('show');
             exportCSV();
+        });
+        document.getElementById('donCancel').addEventListener('click', () => {
+            donOverlay.classList.remove('show');
         });
 
         function exportCSV() {
