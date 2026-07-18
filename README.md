@@ -14,12 +14,14 @@ Al abrir la página pide el **usuario del ejecutivo** (autocompletado sobre una 
 - `server.js` — backend Node puro (sin dependencias): sirve las páginas y guarda/lee las opiniones. Rate limit y healthcheck incluidos.
 - `Dockerfile` — para deploy en EasyPanel.
 
-## Cómo funciona la encuesta
+## Flujo de uso
 
-1. La persona usa la app y aprieta "descargar csv".
-2. Si nunca contestó la encuesta, aparece el modal: puntaje 1-5 (estrellas) + "¿Qué mejorarías o qué le falta?" (texto opcional). **La descarga recién ocurre al enviarla** ("ahora no" la cancela).
-3. Al enviar, el dato se guarda en el servidor (`POST /api/feedback`) y queda marcado en `localStorage` — las descargas siguientes son directas.
-4. Vos entrás a `/admin`, ponés la clave y ves total, promedio, distribución y todas las respuestas (cada una con día y hora).
+1. **Al abrir la página**: modal "Escribe tu Ejecutivo" con autocompletado sobre la lista fija (const `EJECUTIVOS` en `index.html`, 215 usuarios). Solo deja continuar con un nombre de la lista; queda en `localStorage` (`maverix_user`) y registra un evento `login`.
+2. La persona procesa su CSV y aprieta "descargar csv".
+3. **Encuesta (una vez por ejecutivo)**: si ese ejecutivo nunca calificó, aparece el modal con estrellas + **comentario obligatorio** (mín. 3 letras). Sin salida: se contesta o no se descarga. Se guarda con el nombre del ejecutivo.
+4. **Modal de donación (en cada descarga)**: "MAVERIX es GRATIS — mantenerlo, NO" + alias `palta.camote.mp` (click = copiar). Botón "descargar" baja el archivo; "cancelar" (chiquito) cierra sin descargar.
+5. El CSV se descarga como **`Maverix - mensaje AAAA-MM-DD.csv`** y registra un evento `download` con la cantidad de filas.
+6. En `/admin` (con clave): stats, tabla "quién usa la página" (click en una fila = detalle de cada ingreso/descarga con fecha-hora + sus calificaciones y comentarios) y lista completa de opiniones con `@usuario`.
 
 ## Endpoints
 
