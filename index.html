@@ -312,7 +312,9 @@
         .fb-modal .fb-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 22px; line-height: 1.5; }
         .fb-label { font-family: var(--mono); color: var(--muted); font-size: 0.74rem; margin-bottom: 9px; text-transform: uppercase; letter-spacing: 1px; }
         .fb-label::before { content: '// '; color: var(--faint); }
-        .fb-stars { display: flex; gap: 6px; margin-bottom: 22px; }
+        .fb-stars-row { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
+        .fb-stars { display: flex; gap: 6px; }
+        .fb-word { font-family: var(--mono); font-size: 0.8rem; color: var(--acid); letter-spacing: 0.5px; min-height: 1em; }
         .fb-star { font-size: 1.85rem; line-height: 1; cursor: pointer; color: #2a2a2a; transition: color 0.15s, transform 0.15s; user-select: none; }
         .fb-star:hover { transform: scale(1.15); }
         .fb-star.on { color: var(--amber); text-shadow: 0 0 16px rgba(255,180,58,0.45); }
@@ -570,16 +572,19 @@
                 <p class="fb-sub" id="fbSub">Tu opini&oacute;n ayuda a mejorar la herramienta. Te lleva 10 segundos.</p>
 
                 <div class="fb-label">&iquest;qu&eacute; tan &uacute;til te result&oacute;?</div>
-                <div class="fb-stars" id="fbStars">
-                    <span class="fb-star" data-val="1">&#9733;</span>
-                    <span class="fb-star" data-val="2">&#9733;</span>
-                    <span class="fb-star" data-val="3">&#9733;</span>
-                    <span class="fb-star" data-val="4">&#9733;</span>
-                    <span class="fb-star" data-val="5">&#9733;</span>
+                <div class="fb-stars-row">
+                    <div class="fb-stars" id="fbStars">
+                        <span class="fb-star" data-val="1">&#9733;</span>
+                        <span class="fb-star" data-val="2">&#9733;</span>
+                        <span class="fb-star" data-val="3">&#9733;</span>
+                        <span class="fb-star" data-val="4">&#9733;</span>
+                        <span class="fb-star" data-val="5">&#9733;</span>
+                    </div>
+                    <span class="fb-word" id="fbWord"></span>
                 </div>
 
-                <div class="fb-label">&iquest;qu&eacute; mejorar&iacute;as o qu&eacute; le falta?</div>
-                <textarea id="fbText" placeholder="escrib&iacute; tu sugerencia ac&aacute;... (opcional)"></textarea>
+                <div class="fb-label">tu comentario</div>
+                <textarea id="fbText" placeholder="qu&eacute; mejorar&iacute;as, qu&eacute; le falta o qu&eacute; te gust&oacute;..."></textarea>
 
                 <div class="fb-actions">
                     <button class="fb-skip" id="fbSkip">ahora no</button>
@@ -934,17 +939,27 @@
             try { return !!localStorage.getItem(fbSentKey()); } catch (e) { return false; }
         }
 
+        const fbWord = document.getElementById('fbWord');
+        const RATING_WORDS = { 1: 'no me sirvió', 2: 'flojo', 3: 'está bien', 4: 'muy útil', 5: 'excelente' };
+
+        // Enviar recien se habilita con estrellas + comentario (el comentario es obligatorio)
         function paintStars() {
             fbStars.querySelectorAll('.fb-star').forEach(s => {
                 s.classList.toggle('on', Number(s.dataset.val) <= fbRating);
             });
-            fbSend.disabled = fbRating === 0;
+            fbWord.textContent = fbRating ? RATING_WORDS[fbRating] : '';
+            checkSend();
         }
+        function checkSend() {
+            fbSend.disabled = fbRating === 0 || fbText.value.trim().length < 3;
+        }
+        fbText.addEventListener('input', checkSend);
         fbStars.querySelectorAll('.fb-star').forEach(s => {
             s.addEventListener('click', () => { fbRating = Number(s.dataset.val); paintStars(); });
             s.addEventListener('mouseenter', () => {
                 const v = Number(s.dataset.val);
                 fbStars.querySelectorAll('.fb-star').forEach(o => o.classList.toggle('on', Number(o.dataset.val) <= v));
+                fbWord.textContent = RATING_WORDS[v];
             });
         });
         fbStars.addEventListener('mouseleave', paintStars);
@@ -964,8 +979,9 @@
             fbText.value = '';
             fbSend.disabled = true;
             fbSub.textContent = gating
-                ? 'Para descargar tu archivo, contanos primero qué te pareció. Te lleva 10 segundos.'
-                : 'Tu opinión ayuda a mejorar la herramienta. Te lleva 10 segundos.';
+                ? 'Contestá y tu archivo se descarga solo. Te lleva 20 segundos.'
+                : 'Tu opinión ayuda a mejorar la herramienta.';
+            fbSend.textContent = gating ? 'enviar y descargar' : 'enviar';
             fbOverlay.classList.add('show');
         }
         const footerFeedback = document.getElementById('footerFeedback');
@@ -1004,7 +1020,7 @@
         }
 
         fbSend.addEventListener('click', () => {
-            if (fbRating === 0) return;
+            if (fbRating === 0 || fbText.value.trim().length < 3) return;
             fbSend.disabled = true;
             // Timeout de 8s asi un backend colgado no atrapa al usuario
             const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
