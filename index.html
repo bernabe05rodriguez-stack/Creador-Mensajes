@@ -965,7 +965,7 @@
             // Fecha al final del nombre (AAAA-MM-DD asi ordenan solos en la carpeta)
             const d = new Date();
             const pad = n => String(n).padStart(2, '0');
-            a.download = 'contactos_mensajes_' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '.csv';
+            a.download = 'Maverix - mensaje ' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '.csv';
             a.click();
             URL.revokeObjectURL(url);
             showToast('csv descargado · ' + contactRows.length + ' telefonos');
