@@ -248,6 +248,9 @@
         .var-btn:hover { background: var(--acid); color: #0a0a0a; border-color: var(--acid); }
         .var-btn.money { border-color: rgba(255,180,58,0.5); color: var(--amber); }
         .var-btn.money:hover { background: var(--amber); color: #0a0a0a; }
+        /* Las dos variables mas usadas, resaltadas en acido */
+        .var-btn.hot { border-color: rgba(198,255,58,0.55); color: var(--acid); background: rgba(198,255,58,0.08); font-weight: 600; }
+        .var-btn.hot:hover { background: var(--acid); color: #0a0a0a; border-color: var(--acid); }
 
         .msg-preview {
             margin-top: 12px; padding: 15px 16px; background: var(--bg-2);
@@ -782,10 +785,11 @@
             const p = document.createElement('p');
             p.textContent = 'Variables';
             frag.appendChild(p);
+            const hotCols = ['Razon Social', '$ Asig.']; // las dos que mas se usan
             headers.forEach(h => {
                 if (phoneColNames.includes(h)) return;
                 const btn = document.createElement('button');
-                btn.className = 'var-btn' + (moneyCols.includes(h) ? ' money' : '');
+                btn.className = 'var-btn' + (hotCols.includes(h) ? ' hot' : (moneyCols.includes(h) ? ' money' : ''));
                 btn.textContent = `{${h}}`;
                 btn.addEventListener('click', () => {
                     const ta = msgTemplate;
