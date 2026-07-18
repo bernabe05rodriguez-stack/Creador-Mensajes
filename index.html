@@ -358,6 +358,18 @@
         .ac-item:hover, .ac-item.sel { background: rgba(198,255,58,0.09); color: var(--ink); }
         .gate-err { color: var(--danger); font-family: var(--mono); font-size: 0.78rem; min-height: 20px; margin: 4px 0 8px; }
 
+        /* ===== Donacion (antes de descargar) ===== */
+        .don-alias {
+            font-family: var(--mono); font-size: 1.15rem; font-weight: 600; color: var(--acid);
+            background: var(--acid-dim); border: 1px dashed rgba(198,255,58,0.5); border-radius: 7px;
+            padding: 14px 16px; cursor: pointer; display: flex; justify-content: space-between;
+            align-items: center; gap: 10px; letter-spacing: 0.5px; transition: all 0.2s; user-select: all;
+        }
+        .don-alias:hover { border-style: solid; box-shadow: 0 0 18px rgba(198,255,58,0.25); }
+        .don-copy { font-size: 0.7rem; color: var(--muted); font-weight: 400; white-space: nowrap; }
+        .don-note { font-family: var(--mono); font-size: 0.7rem; color: var(--faint); margin: 10px 0 20px; line-height: 1.6; }
+        .don-note::before { content: '// '; }
+
         /* ===== Tutorial modal ===== */
         .tut-link { font-family: var(--mono); color: var(--faint); text-decoration: none; transition: color 0.2s; white-space: nowrap; }
         .tut-link:hover { color: var(--acid); }
@@ -512,6 +524,20 @@
     </div>
 
     <div class="toast" id="toast"></div>
+
+    <!-- Donacion: antes de descargar -->
+    <div class="fb-overlay" id="donOverlay">
+        <div class="fb-modal">
+            <h3>maverix es gratis &mdash; mantenerlo, no</h3>
+            <p class="fb-sub">Este programa se mantiene con donaciones. Si te ahorra laburo todos los d&iacute;as, bancalo con lo que quieras: con el precio de un caf&eacute; ya ayud&aacute;s un mont&oacute;n.</p>
+            <div class="fb-label">don&aacute; al alias</div>
+            <div class="don-alias" id="donAlias">palta.camote.mp<span class="don-copy">[ tocar para copiar ]</span></div>
+            <p class="don-note">funciona desde Mercado Pago o cualquier banco &middot; transfer&iacute;s al alias y listo</p>
+            <div class="fb-actions">
+                <button class="btn-send" id="donGo">ya don&eacute; &middot; descargar</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Gate: quien va a usar la pagina -->
     <div class="fb-overlay" id="gateOverlay">
@@ -879,12 +905,38 @@
         }
 
         // ========== EXPORT ==========
-        // La descarga queda bloqueada hasta que conteste la encuesta (una sola vez por navegador).
+        // La descarga queda bloqueada hasta contestar la encuesta (una vez por ejecutivo)
+        // y despues pasa por el modal de donacion en cada descarga.
         document.getElementById('btnExportCSV').addEventListener('click', () => {
             if (!contactRows.length) { showToast('no hay telefonos para exportar'); return; }
-            if (fbAlreadySent()) { exportCSV(); return; }
+            if (fbAlreadySent()) { openDonation(); return; }
             pendingExport = true;
             openFeedback(true);
+        });
+
+        // ========== DONACION (antes de descargar) ==========
+        const donOverlay = document.getElementById('donOverlay');
+        const DON_ALIAS = 'palta.camote.mp';
+        function openDonation() { donOverlay.classList.add('show'); }
+        document.getElementById('donAlias').addEventListener('click', () => {
+            const done = () => showToast('alias copiado: ' + DON_ALIAS);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(DON_ALIAS).then(done).catch(done);
+            } else {
+                try {
+                    const i = document.createElement('input');
+                    i.value = DON_ALIAS;
+                    document.body.appendChild(i);
+                    i.select();
+                    document.execCommand('copy');
+                    i.remove();
+                    done();
+                } catch (e) {}
+            }
+        });
+        document.getElementById('donGo').addEventListener('click', () => {
+            donOverlay.classList.remove('show');
+            exportCSV();
         });
 
         function exportCSV() {
@@ -1013,8 +1065,13 @@
                 const sub = fbThanks.querySelector('.fb-sub');
                 if (sub) sub.textContent = 'Guardada localmente. Igual te dejamos descargar.';
             }
-            if (pendingExport) { pendingExport = false; exportCSV(); }
-            setTimeout(closeFeedback, 2200);
+            // Con descarga pendiente: gracias breve y se pasa al modal de donacion.
+            const wasPending = pendingExport;
+            pendingExport = false;
+            setTimeout(() => {
+                fbOverlay.classList.remove('show');
+                if (wasPending) openDonation();
+            }, wasPending ? 1200 : 2200);
         }
 
         fbSend.addEventListener('click', () => {
