@@ -173,6 +173,12 @@
         }
         .upload-area.dragover { border-style: solid; }
         .upload-area.hidden { display: none; }
+        /* El link del ejemplo acompaña al área de carga: cuando hay archivo
+           cargado, no tiene sentido seguir ofreciendo el demo. */
+        .try-demo { font-size: 0.78rem; color: var(--muted); margin-top: 12px; text-align: center; }
+        .try-demo a { color: var(--acid); text-decoration: none; border-bottom: 1px dotted var(--acid); cursor: pointer; }
+        .try-demo a:hover { opacity: 0.8; }
+        .upload-area.hidden ~ .try-demo { display: none; }
         .upload-area input { display: none; }
         .up-prompt { font-family: var(--mono); font-size: 0.92rem; color: var(--muted); line-height: 1.6; }
         .up-prompt .arrow { color: var(--acid); margin-right: 8px; }
@@ -259,6 +265,7 @@
         }
         .msg-preview::before { content: '// preview'; display: block; font-family: var(--mono); font-size: 0.62rem; color: var(--faint); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
         .msg-preview strong { color: var(--acid); font-weight: 600; }
+        .rot-note { display: block; margin-top: 8px; font-family: var(--mono); font-size: 0.66rem; color: var(--faint); text-transform: uppercase; letter-spacing: 1px; }
         .hint { font-size: 0.82rem; color: var(--muted); margin-bottom: 14px; line-height: 1.6; }
         .hint strong { color: var(--ink); }
         .hint code { color: var(--acid); background: var(--acid-dim); padding: 2px 6px; border-radius: 4px; font-size: 0.78rem; font-family: var(--mono); }
@@ -462,6 +469,12 @@
                 <p class="up-prompt"><span class="arrow">▸</span>arrastrá <strong>Informe de Cuentas.csv</strong> o <span class="act">explorá tus archivos</span><span class="blink">_</span></p>
                 <input type="file" id="fileInput" accept=".csv,.txt">
             </div>
+            <!-- 10 de 36 ejecutivos entraron y se fueron sin descargar nada, y
+                 20 usaron la herramienta un solo día. Nadie lo escribió en la
+                 encuesta (sólo responden los que llegan al final). Un ejemplo a
+                 un click evita el arranque en frío para el que no tiene el CSV
+                 a mano o no sabe qué formato espera. -->
+            <p class="try-demo">¿Primera vez? <a href="#" id="loadDemo">Probá con un ejemplo</a> para ver cómo funciona.</p>
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
                 <p>procesando archivo...</p>
@@ -485,7 +498,8 @@
         <div class="step disabled" id="step3">
             <h2><span class="step-num">3</span>tu mensaje personalizado</h2>
             <p class="hint">
-                Usá <code>{NombreColumna}</code> para insertar datos. <code>{$ Asig.}</code> y <code>{$ Hist.}</code> se formatean como pesos.
+                Usá <code>{NombreColumna}</code> para insertar datos. <code>{$ Asig.}</code> y <code>{$ Hist.}</code> se formatean como pesos.<br>
+                ¿Varios mensajes? Separalos con una línea de <code>---</code> y se van a ir <strong>rotando</strong> entre los contactos (así los envíos no salen todos iguales).
             </p>
             <div class="msg-area">
                 <textarea id="msgTemplate" placeholder="Hola {Razon Social}, te contactamos por tu cuenta {Cuenta}. Tu saldo es de {$ Asig.}. Contactanos para regularizar tu situacion."></textarea>
@@ -716,6 +730,27 @@
         fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
         document.getElementById('btnRemoveFile').addEventListener('click', resetFile);
 
+        // Ejemplo de arranque: arma un CSV de mentira con las columnas reales
+        // del Informe de Cuentas y lo mete por el MISMO camino que un archivo
+        // subido (no hay una segunda vía que se pueda desincronizar).
+        document.getElementById('loadDemo').addEventListener('click', e => {
+            e.preventDefault();
+            const demo = [
+                'Cuenta;Razon Social;Telefono_1;$ Asig.;$ Hist.',
+                '1001;Ferreteria San Martin;3416001122;15000;48000',
+                '1002;Almacen Doña Rosa;3416003344-3416005566;8250;21500',
+                '1003;Kiosco El Trebol;3415007788;32400;95000',
+                '1004;Panaderia La Espiga;3416009900;5100;12750',
+            ].join('\n');
+            const file = new File(['\ufeff' + demo], 'ejemplo.csv', { type: 'text/csv' });
+            handleFile(file);
+            if (!msgTemplate.value.trim()) {
+                msgTemplate.value = 'Hola {Razon Social}, te escribimos por tu cuenta {Cuenta}. Tenés un saldo de {$ Asig.}. Cualquier duda, respondenos por acá!';
+                msgTemplate.dispatchEvent(new Event('input'));
+            }
+            showToast('ejemplo cargado · 5 telefonos de prueba');
+        });
+
         function handleFile(file) {
             uploadArea.classList.add('hidden');
             loadingOverlay.classList.add('show');
@@ -838,12 +873,18 @@
         function updatePreview() {
             if (!rawData.length) return;
             const row = rawData.find(r => phoneColNames.some(c => r[c] && r[c].trim())) || rawData[0];
-            let msg = msgTemplate.value || msgTemplate.placeholder;
+            const tpls = getTemplates();
+            let msg = tpls[0];
             msg = msg.replace(/\{([^}]+)\}/g, (m, key) => {
                 if (row[key] === undefined) return m;
                 const val = moneyCols.includes(key) ? formatPeso(row[key]) : row[key];
                 return '<strong>' + escHtml(val) + '</strong>';
             });
+            // Con varias variantes se avisa cuántas hay: si no, la vista previa
+            // muestra sólo la primera y parece que las demás se perdieron.
+            if (tpls.length > 1) {
+                msg += '<span class="rot-note"> · rotando entre ' + tpls.length + ' mensajes</span>';
+            }
             msgPreview.innerHTML = msg || 'esperando mensaje...';
             updateProgress();
         }
@@ -896,8 +937,29 @@
         }
 
         // ========== BUILD MESSAGE ==========
-        function buildMessage(row) {
-            let tpl = msgTemplate.value || msgTemplate.placeholder;
+        // Variantes del mensaje, separadas por una línea con solo "---".
+        //
+        // Pedido de bdelacruz (2026-08-04): "rotar entre 1 y 2 mensajes". No es
+        // sólo comodidad: mandar el MISMO texto a cientos de números seguidos es
+        // lo que dispara los filtros de spam de WhatsApp. Rotando variantes, los
+        // envíos se ven distintos entre sí.
+        //
+        // Se separan con "---" en vez de agregar más cajas de texto para no
+        // tocar el flujo de 4 pasos que la gente ya sabe usar: quien no ponga
+        // "---" sigue teniendo exactamente el comportamiento de antes.
+        function getTemplates() {
+            const raw = msgTemplate.value.trim() || msgTemplate.placeholder;
+            const parts = raw
+                .split(/^\s*-{3,}\s*$/m)   // línea que sea solo guiones
+                .map(t => t.trim())
+                .filter(Boolean);
+            return parts.length ? parts : [raw];
+        }
+
+        function buildMessage(row, idx) {
+            const tpls = getTemplates();
+            // Rota por posición del contacto: con 2 variantes, uno y uno.
+            const tpl = tpls[(idx || 0) % tpls.length];
             return tpl.replace(/\{([^}]+)\}/g, (m, key) => {
                 if (row[key] === undefined) return m;
                 return moneyCols.includes(key) ? formatPeso(row[key]) : row[key];
@@ -949,10 +1011,12 @@
             const headerRow = ['Telefono', 'Mensaje', ...extraArr];
             const lines = [headerRow.map(csvField).join(sep)];
 
-            contactRows.forEach(c => {
+            contactRows.forEach((c, i) => {
                 const phone = '="+549' + c.number + ',"';
-                const msg = buildMessage(c.row);
-                const row = [phone, csvField(msg)];
+                const msg = buildMessage(c.row, i);
+                // El mensaje se sanea (no se escapa): sale sin comillas, tal
+                // cual lo va a recibir el cliente. Ver csvMessage().
+                const row = [phone, csvMessage(msg)];
                 extraArr.forEach(col => row.push(csvField(c.row[col] || '')));
                 lines.push(row.join(sep));
             });
@@ -1109,6 +1173,28 @@
                 }
             });
         });
+
+        // El mensaje va SIN comillas de CSV a propósito.
+        //
+        // Antes se escapaba como manda el estándar (envolver en comillas si el
+        // texto trae `;`, comillas o saltos). Correcto para Excel — pero las
+        // herramientas de envío masivo pegan la celda tal cual, así que el
+        // cliente recibía el mensaje CON las comillas puestas. Reportado por
+        // pazp (2026-07-21): "figura con comillas, y si lo mando con tiny no
+        // puedo borrarlas antes de mandarlo".
+        //
+        // Como el mensaje es lo que se manda literal, se sanea en vez de
+        // escapar: se cambian los caracteres que romperían la fila por
+        // equivalentes que se leen igual. Un punto y coma de menos no cambia el
+        // mensaje; una comilla de más sí lo arruina.
+        function csvMessage(val) {
+            return String(val)
+                .replace(/[\r\n]+/g, ' ')      // saltos -> espacio (la fila del CSV es una linea)
+                .replace(/;/g, ',')           // el ; es el separador: se reemplaza por coma
+                .replace(/"/g, "'")           // comillas rectas → simples (no rompen la celda)
+                .replace(/\s{2,}/g, ' ')      // espacios repetidos que deja el reemplazo
+                .trim();
+        }
 
         function csvField(val) {
             val = String(val);
