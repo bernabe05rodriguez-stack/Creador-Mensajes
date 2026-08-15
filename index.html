@@ -97,7 +97,7 @@
         .status b { color: var(--acid-text); font-weight: 600; }
 
         .tagline {
-            font-family: var(--mono); font-size: 0.82rem; color: var(--muted);
+            font-family: var(--sans); font-size: 0.86rem; color: var(--muted);
             margin: 16px 0 26px; letter-spacing: 0.2px; text-align: center;
         }
         .tagline .c { color: var(--acid-text); }
@@ -127,24 +127,23 @@
         .step {
             background: var(--surface);
             border: 1px solid var(--line);
-            border-radius: 10px;
-            padding: 28px 30px;
-            margin-bottom: 18px;
+            border-radius: 14px;
+            padding: 30px 32px;
+            margin-bottom: 20px;
             position: relative;
             box-shadow: var(--shadow);
-            transition: opacity 0.4s, transform 0.3s, border-color 0.25s, box-shadow 0.3s;
-        }
-        .step::after {
-            content: ''; position: absolute; inset: 0; border-radius: 10px; pointer-events: none;
-            opacity: 0; transition: opacity 0.4s;
-            background: transparent;
+            /* Sólo se anima lo barato (opacidad y transform). La sombra queda
+               fija: animar box-shadow obliga a repintar la tarjeta entera en
+               cada cuadro, y era parte de los tirones al deslizar. */
+            transition: opacity 0.4s var(--ease), transform 0.3s var(--ease), border-color 0.25s var(--ease);
         }
         .step:not(.disabled):hover {
-            border-color: rgba(217,148,23,0.45); transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+            border-color: rgba(217,148,23,0.45);
+            transform: translateY(-2px);
         }
-        .step:not(.disabled):hover::after { opacity: 1; }
-        .step.disabled { opacity: 0.4; pointer-events: none; box-shadow: var(--shadow); }
+        /* `opacity` en vez de `filter: saturate()`: el filtro fuerza al
+           navegador a rasterizar la tarjeta de nuevo en cada scroll. */
+        .step.disabled { opacity: 0.4; pointer-events: none; }
         .step.disabled .step-num { color: var(--faint); border-color: var(--line); }
 
         /* Títulos en sans y con capitalización normal. En mono + minúscula
@@ -152,7 +151,7 @@
            herramienta de trabajo. */
         h2 {
             font-family: var(--sans); font-size: 1rem; font-weight: 600;
-            color: var(--ink); margin-bottom: 18px; letter-spacing: -0.1px;
+            color: var(--ink); margin-bottom: 16px; letter-spacing: -0.2px;
             display: flex; align-items: center;
         }
         h2 .step-num {
@@ -165,12 +164,11 @@
 
         /* ===== Upload ===== */
         .upload-area {
-            border: 1px dashed var(--line-2);
-            border-radius: 7px;
-            padding: 40px 24px;
+            border: 2px dashed var(--line-2);
+            border-radius: 12px;
+            padding: 44px 24px;
             cursor: pointer;
-            transition: all 0.25s;
-            background: var(--bg-2);
+            background: var(--bg);
             position: relative; overflow: hidden;
         }
         .upload-area:hover, .upload-area.dragover {
@@ -185,7 +183,7 @@
         .try-demo a:hover { opacity: 0.8; }
         .upload-area.hidden ~ .try-demo { display: none; }
         .upload-area input { display: none; }
-        .up-prompt { font-family: var(--mono); font-size: 0.92rem; color: var(--muted); line-height: 1.6; }
+        .up-prompt { font-family: var(--sans); font-size: 0.92rem; color: var(--muted); line-height: 1.6; }
         .up-prompt .arrow { color: var(--acid-text); margin-right: 8px; }
         .up-prompt strong { color: var(--ink); font-weight: 600; }
         .up-prompt .act { color: var(--acid-text); border-bottom: 1px solid rgba(217,148,23,0.45); }
@@ -205,7 +203,7 @@
         .btn-remove {
             background: transparent; color: var(--muted); border: 1px solid var(--line-2);
             padding: 6px 13px; border-radius: 5px; cursor: pointer;
-            font-family: var(--mono); font-size: 0.76rem; transition: all 0.2s;
+            font-family: var(--sans); font-size: 0.78rem; transition: all 0.2s;
         }
         .btn-remove:hover { color: var(--danger); border-color: var(--danger); }
 
@@ -216,14 +214,14 @@
             border-top-color: var(--acid); border-radius: 50%;
             animation: spin 0.7s linear infinite; margin: 0 auto 14px;
         }
-        .loading-overlay p { color: var(--muted); font-size: 0.82rem; font-family: var(--mono); }
+        .loading-overlay p { color: var(--muted); font-size: 0.82rem; font-family: var(--sans); }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 
         /* ===== Chips ===== */
         .chip-group { display: flex; flex-wrap: wrap; gap: 7px; }
         .chip {
-            font-family: var(--mono); padding: 8px 14px; border-radius: 5px; cursor: pointer;
+            font-family: var(--sans); padding: 8px 14px; border-radius: 7px; cursor: pointer;
             font-size: 0.8rem; border: 1px solid var(--line-2); background: var(--bg-2);
             color: var(--muted); transition: all 0.18s; user-select: none;
         }
@@ -239,17 +237,20 @@
         .msg-area { display: flex; gap: 12px; flex-wrap: wrap; }
         .msg-area textarea {
             flex: 1; min-width: 280px; min-height: 116px;
-            background: var(--bg-2); color: var(--ink);
-            border: 1px solid var(--line-2); border-radius: 7px;
-            padding: 14px; font-family: var(--sans); font-size: 0.92rem; line-height: 1.55; resize: vertical;
+            background: var(--bg); color: var(--ink);
+            border: 1px solid var(--line-2); border-radius: 10px;
+            padding: 16px; font-family: var(--sans); font-size: 0.94rem; line-height: 1.6; resize: vertical;
         }
         .msg-area textarea::placeholder { color: var(--faint); }
         .msg-area textarea:focus { outline: none; border-color: var(--acid-text); box-shadow: 0 0 0 3px rgba(217,148,23,0.18); }
+        /* bloque interno: hundido respecto de la tarjeta */
         .variables-panel {
             min-width: 210px; max-height: 250px; overflow-y: auto;
-            background: var(--bg-2); border-radius: 7px; padding: 13px; border: 1px solid var(--line-2);
+            background: var(--bg); border-radius: 10px; padding: 14px; border: 1px solid var(--line);
+            /* scroll propio: no encadena con el de la pagina al llegar al fin */
+            overscroll-behavior: contain;
         }
-        .variables-panel p { font-family: var(--mono); font-size: 0.64rem; color: var(--faint); margin-bottom: 9px; text-transform: uppercase; letter-spacing: 1.5px; }
+        .variables-panel p { font-family: var(--sans); font-size: 0.72rem; font-weight: 600; color: var(--faint); margin-bottom: 9px; text-transform: uppercase; letter-spacing: 0.8px; }
         .variables-panel p::before { content: '// '; }
         .var-btn {
             display: inline-block; background: #1b2330; color: var(--muted);
@@ -264,14 +265,15 @@
         .var-btn.hot:hover { background: var(--acid); color: #12161c; border-color: var(--acid); }
 
         .msg-preview {
-            margin-top: 12px; padding: 15px 16px; background: var(--bg-2);
-            border: 1px solid var(--line); border-left: 2px solid rgba(217,148,23,0.45); border-radius: 0 7px 7px 0;
-            font-size: 0.88rem; color: var(--muted); white-space: pre-wrap; line-height: 1.6;
+            margin-top: 14px; padding: 16px 18px; background: var(--bg);
+            border: 1px solid var(--line); border-left: 3px solid var(--acid);
+            border-radius: 4px 10px 10px 4px;
+            font-size: 0.9rem; color: var(--ink); white-space: pre-wrap; line-height: 1.65;
         }
         .msg-preview::before { content: '// preview'; display: block; font-family: var(--mono); font-size: 0.62rem; color: var(--faint); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
         .msg-preview strong { color: var(--acid-text); font-weight: 600; }
         .rot-note { display: block; margin-top: 8px; font-family: var(--mono); font-size: 0.66rem; color: var(--faint); text-transform: uppercase; letter-spacing: 1px; }
-        .hint { font-size: 0.82rem; color: var(--muted); margin-bottom: 14px; line-height: 1.6; }
+        .hint { font-size: 0.85rem; color: var(--muted); margin-bottom: 18px; line-height: 1.65; }
         .hint strong { color: var(--ink); }
         .hint code { color: var(--acid-text); background: var(--acid-dim); padding: 2px 6px; border-radius: 4px; font-size: 0.78rem; font-family: var(--mono); }
 
@@ -281,7 +283,7 @@
 
         /* ===== Buttons ===== */
         .btn {
-            font-family: var(--mono); padding: 13px 30px; border: none; border-radius: 6px;
+            font-family: var(--sans); padding: 13px 30px; border: none; border-radius: 8px;
             font-weight: 600; cursor: pointer; font-size: 0.88rem; transition: all 0.2s;
             text-transform: uppercase; letter-spacing: 1px; position: relative; overflow: hidden;
         }
@@ -294,7 +296,7 @@
         /* ===== Toast ===== */
         .toast {
             position: fixed; bottom: 24px; right: 24px;
-            background: var(--acid); color: #12161c; font-family: var(--mono);
+            background: var(--acid); color: #12161c; font-family: var(--sans);
             padding: 13px 20px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;
             transform: translateY(80px); opacity: 0; transition: all 0.3s; z-index: 100;
             box-shadow: var(--shadow-lg);
@@ -305,7 +307,7 @@
         /* ===== Feedback modal ===== */
         .fb-overlay {
             position: fixed; inset: 0; background: rgba(8,12,17,0.66);
-            backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center;
+            display: none; align-items: center; justify-content: center;
             z-index: 200; padding: 20px; opacity: 0; transition: opacity 0.3s;
         }
         .fb-overlay.show { display: flex; opacity: 1; }
@@ -316,13 +318,13 @@
             transform: translateY(14px); transition: transform 0.3s;
         }
         .fb-overlay.show .fb-modal { transform: translateY(0); }
-        .fb-modal h3 { font-family: var(--mono); color: var(--ink); font-size: 1.05rem; font-weight: 600; margin-bottom: 6px; }
+        .fb-modal h3 { font-family: var(--sans); color: var(--ink); font-size: 1.05rem; font-weight: 600; margin-bottom: 6px; }
         .fb-modal .fb-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 22px; line-height: 1.5; }
-        .fb-label { font-family: var(--mono); color: var(--muted); font-size: 0.74rem; margin-bottom: 9px; text-transform: uppercase; letter-spacing: 1px; }
+        .fb-label { font-family: var(--sans); color: var(--muted); font-size: 0.8rem; font-weight: 600; margin-bottom: 9px; letter-spacing: 0; }
         .fb-label::before { content: '// '; color: var(--faint); }
         .fb-stars-row { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
         .fb-stars { display: flex; gap: 6px; }
-        .fb-word { font-family: var(--mono); font-size: 0.8rem; color: var(--acid-text); letter-spacing: 0.5px; min-height: 1em; }
+        .fb-word { font-family: var(--sans); font-size: 0.8rem; color: var(--acid-text); letter-spacing: 0.5px; min-height: 1em; }
         .fb-star { font-size: 1.85rem; line-height: 1; cursor: pointer; color: #2a2a2a; transition: color 0.15s, transform 0.15s; user-select: none; }
         .fb-star:hover { transform: scale(1.15); }
         .fb-star.on { color: var(--amber); text-shadow: 0 0 16px rgba(255,180,58,0.45); }
@@ -335,14 +337,14 @@
         .fb-modal textarea:focus { outline: none; border-color: var(--acid-text); box-shadow: 0 0 0 3px rgba(217,148,23,0.18); }
         .fb-actions { display: flex; gap: 10px; justify-content: flex-end; align-items: center; }
         .btn-send {
-            font-family: var(--mono); background: var(--acid); color: #12161c; padding: 11px 24px; border: none; border-radius: 6px;
+            font-family: var(--sans); background: var(--acid); color: #12161c; padding: 11px 24px; border: none; border-radius: 8px;
             font-weight: 600; cursor: pointer; font-size: 0.84rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;
         }
         .btn-send:hover { box-shadow: 0 0 22px rgba(217,148,23,0.26); }
         .btn-send:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
         .fb-thanks { text-align: center; padding: 16px 0 4px; }
-        .fb-thanks .fb-check { font-family: var(--mono); font-size: 2rem; color: var(--acid-text); margin-bottom: 10px; }
-        .fb-thanks h3 { font-family: var(--mono); margin-bottom: 6px; color: var(--ink); }
+        .fb-thanks .fb-check { font-family: var(--sans); font-size: 2rem; color: var(--acid-text); margin-bottom: 10px; }
+        .fb-thanks h3 { font-family: var(--sans); margin-bottom: 6px; color: var(--ink); }
 
         /* ===== Gate de ejecutivo (quien usa la pagina) ===== */
         .gate-modal { max-width: 420px; }
@@ -441,11 +443,8 @@
 
         /* Los pasos bloqueados se atenúan y encogen apenas; al habilitarse
            vuelven a su tamaño. Antes el salto de opacidad era seco. */
-        .step {
-            transition: opacity 0.45s var(--ease), transform 0.45s var(--ease),
-                        border-color 0.3s var(--ease), box-shadow 0.35s var(--ease);
-        }
-        .step.disabled { transform: scale(0.985); filter: saturate(0.6); }
+        /* (la transición de .step se define arriba, sin box-shadow) */
+        .step.disabled { transform: scale(0.985); }
 
         /* Botones: bajan un pelo al presionarse. Da sensación de tacto. */
         button, .var-btn, .chip, .footer-link, .up-prompt .act {
@@ -518,6 +517,35 @@
                 scroll-behavior: auto !important;
             }
         }
+
+        /* ===== Fluidez del scroll =====
+           El scroll se trababa por trabajo innecesario en cada cuadro. Además
+           de sacar el efecto que seguía al cursor y de dejar de animar sombras
+           y filtros, se le avisa al navegador qué puede tratar por separado. */
+
+        /* Cada tarjeta se pinta en su propia capa: al desplazarse, el navegador
+           mueve capas ya rasterizadas en vez de volver a dibujar todo. */
+        .step { contain: layout paint style; }
+
+        /* Los overlays fijos no deben forzar repintados del contenido de atrás. */
+        .fb-overlay, .toast { will-change: opacity, transform; }
+
+        /* El confeti se mueve en su propia capa: si no, arrastra a la página
+           entera en cada cuadro de su caída. */
+        .confetti { will-change: transform, opacity; }
+
+        /* Reserva de espacio para la barra: sin esto, al aparecer/desaparecer
+           el contenido salta a los costados y se siente como un tirón. */
+        html { scrollbar-gutter: stable; }
+
+        /* Barra de desplazamiento acorde al tema (Chrome/Edge). */
+        ::-webkit-scrollbar { width: 12px; height: 12px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb {
+            background: var(--line-2); border-radius: 8px;
+            border: 3px solid var(--bg);
+        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--faint); }
     </style>
 </head>
 <body>
@@ -1465,14 +1493,16 @@
             requestAnimationFrame(tick);
         }
 
-        // Resplandor que sigue el cursor
-        document.querySelectorAll('.step, .upload-area').forEach(el => {
-            el.addEventListener('pointermove', e => {
-                const r = el.getBoundingClientRect();
-                el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
-                el.style.setProperty('--my', (e.clientY - r.top) + 'px');
-            });
-        });
+        // El "resplandor que sigue el cursor" se eliminó.
+        //
+        // En cada pointermove sobre una tarjeta llamaba a getBoundingClientRect()
+        // (fuerza al navegador a recalcular el layout) y escribía dos variables
+        // CSS (fuerza recálculo de estilos). Con 5 tarjetas grandes en pantalla,
+        // eso corría decenas de veces por segundo mientras se movía el mouse —
+        // era la causa principal de los tirones al deslizar.
+        //
+        // Además ya no servía para nada: el degradado radial que alimentaba se
+        // había sacado al pasar al tema oscuro (quedó `background: transparent`).
     })();
     </script>
 </body>
