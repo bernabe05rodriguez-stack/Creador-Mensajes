@@ -45,6 +45,10 @@
             --danger: #e5484d;
             --mono: 'IBM Plex Mono', ui-monospace, monospace;
             --sans: 'IBM Plex Sans', system-ui, sans-serif;
+            /* Curva única de movimiento para toda la interfaz: arranca rápido y
+               frena suave. Compartirla es lo que hace que el conjunto se sienta
+               de una pieza en vez de que cada cosa se mueva a su ritmo. */
+            --ease: cubic-bezier(0.22, 1, 0.36, 1);
             --shadow: 0 1px 2px rgba(0,0,0,0.5), 0 6px 18px rgba(0,0,0,0.45);
             --shadow-lg: 0 12px 40px rgba(0,0,0,0.62);
         }
@@ -429,6 +433,74 @@
         }
         .step.just-enabled { animation: unlockFlash 1s ease-out; }
 
+        /* ===== Fluidez general =====
+           Una curva única para todo (--ease) para que la interfaz se sienta de
+           una pieza: si cada elemento se mueve con su propio ritmo, el conjunto
+           parece desprolijo. Todo lo de abajo es cosmético — nada cambia el
+           comportamiento, y se apaga entero con prefers-reduced-motion. */
+
+        /* Los pasos bloqueados se atenúan y encogen apenas; al habilitarse
+           vuelven a su tamaño. Antes el salto de opacidad era seco. */
+        .step {
+            transition: opacity 0.45s var(--ease), transform 0.45s var(--ease),
+                        border-color 0.3s var(--ease), box-shadow 0.35s var(--ease);
+        }
+        .step.disabled { transform: scale(0.985); filter: saturate(0.6); }
+
+        /* Botones: bajan un pelo al presionarse. Da sensación de tacto. */
+        button, .var-btn, .chip, .footer-link, .up-prompt .act {
+            transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease),
+                        color 0.2s var(--ease), transform 0.12s var(--ease),
+                        box-shadow 0.25s var(--ease), opacity 0.2s var(--ease);
+        }
+        button:active, .var-btn:active, .chip:active { transform: translateY(1px) scale(0.985); }
+
+        /* Zona de carga: respira al arrastrar un archivo encima. */
+        .upload-area { transition: border-color 0.25s var(--ease), background-color 0.25s var(--ease), transform 0.25s var(--ease); }
+        .upload-area.dragover { transform: scale(1.012); }
+
+        /* La barra de progreso y su relleno se mueven con la misma curva. */
+        .progress-fill, .prog-seg { transition: width 0.55s var(--ease), background-color 0.35s var(--ease), opacity 0.35s var(--ease); }
+
+        /* Modales: entran desde abajo con un leve zoom en vez de aparecer. */
+        .fb-overlay { transition: opacity 0.28s var(--ease), visibility 0.28s var(--ease); }
+        .fb-modal, .don-modal {
+            transform: translateY(14px) scale(0.97);
+            transition: transform 0.34s var(--ease), opacity 0.34s var(--ease);
+        }
+        .fb-overlay.show .fb-modal, .fb-overlay.show .don-modal { transform: translateY(0) scale(1); }
+
+        /* Estrellas de la encuesta: crecen al pasar el mouse y al elegirlas. */
+        .fb-star { transition: transform 0.18s var(--ease), color 0.18s var(--ease); }
+        .fb-star:hover { transform: scale(1.18); }
+        .fb-star.on { animation: starPop 0.32s var(--ease); }
+        @keyframes starPop { 0% { transform: scale(1); } 45% { transform: scale(1.3); } 100% { transform: scale(1); } }
+
+        /* El toast entra y sale deslizándose. */
+        .toast { transition: transform 0.32s var(--ease), opacity 0.32s var(--ease); }
+
+        /* Los chips de columnas y variables aparecen escalonados al cargar el
+           CSV, en vez de golpe. (La vista previa del mensaje es un div, no una
+           tabla: no hay filas que animar.) */
+        @keyframes rowIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        #extraColsChips .chip, .variables-panel .var-btn { animation: rowIn 0.3s var(--ease) both; }
+        #extraColsChips .chip:nth-child(1), .variables-panel .var-btn:nth-child(1) { animation-delay: 0.02s; }
+        #extraColsChips .chip:nth-child(2), .variables-panel .var-btn:nth-child(2) { animation-delay: 0.05s; }
+        #extraColsChips .chip:nth-child(3), .variables-panel .var-btn:nth-child(3) { animation-delay: 0.08s; }
+        #extraColsChips .chip:nth-child(4), .variables-panel .var-btn:nth-child(4) { animation-delay: 0.11s; }
+        #extraColsChips .chip:nth-child(5), .variables-panel .var-btn:nth-child(5) { animation-delay: 0.14s; }
+        #extraColsChips .chip:nth-child(n+6), .variables-panel .var-btn:nth-child(n+6) { animation-delay: 0.17s; }
+
+        /* La vista previa del mensaje se refresca en cada tecla: un fade corto
+           evita el parpadeo brusco del texto al reemplazarse. */
+        .msg-preview { transition: color 0.2s var(--ease); }
+
+        /* El bloque de archivo cargado entra desde arriba. */
+        .file-loaded.show { animation: fadeIn 0.4s var(--ease) both; }
+
+        /* El aviso de rotación aparece suave cuando se escribe "---". */
+        .rot-note { animation: fadeIn 0.3s var(--ease) both; }
+
         .confetti { position: fixed; top: -12px; width: 8px; height: 8px; z-index: 300; pointer-events: none; opacity: 0; animation: confettiFall linear forwards; }
         @keyframes confettiFall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 0.9; transform: translateY(102vh) rotate(600deg); } }
 
@@ -436,7 +508,16 @@
             .brand { font-size: 1.05rem; }
             .step { padding: 20px 18px; }
         }
-        @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+        /* Accesibilidad: si el sistema pide menos movimiento, se apaga TODO —
+           animaciones y transiciones. Antes sólo se apagaban las animaciones,
+           así que las transiciones seguían corriendo. */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -799,6 +880,14 @@
                     setTimeout(() => el.classList.remove('just-enabled'), 1000);
                 }, idx * 130);
             });
+            // Acompaña al usuario hasta el paso 2 cuando se desbloquea todo: si
+            // no, en pantallas chicas el archivo se carga arriba y los pasos
+            // nuevos quedan fuera de vista. Se respeta reduced-motion.
+            const suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            setTimeout(() => {
+                const s2 = document.getElementById('step2');
+                if (s2) s2.scrollIntoView({ behavior: suave ? 'smooth' : 'auto', block: 'start' });
+            }, 420);
             renderPhoneCols();
             renderVariables();
             buildContactRows();
