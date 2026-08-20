@@ -16,12 +16,20 @@ Al abrir la página pide el **usuario del ejecutivo** (autocompletado sobre una 
 
 ## Flujo de uso
 
-1. **Al abrir la página**: modal "Escribe tu Ejecutivo" con autocompletado sobre la lista fija (const `EJECUTIVOS` en `index.html`, 215 usuarios). Solo deja continuar con un nombre de la lista; queda en `localStorage` (`maverix_user`) y registra un evento `login`.
+1. **Al abrir la página**: modal "¿Qué ejecutivo sos?" con autocompletado sobre la lista fija (const `EJECUTIVOS` en `index.html`, 215 usuarios). Solo deja continuar con un nombre de la lista; queda en `localStorage` (`maverix_user`) y registra un evento `login`.
 2. La persona procesa su CSV y aprieta "descargar csv".
-3. **Encuesta (una vez por ejecutivo)**: si ese ejecutivo nunca calificó, aparece el modal con estrellas + **comentario obligatorio** (mín. 3 letras). Sin salida: se contesta o no se descarga. Se guarda con el nombre del ejecutivo.
-4. **Modal de donación (en cada descarga)**: "MAVERIX es GRATIS — mantenerlo, NO" + alias `palta.camote.mp` (click = copiar). Botón "descargar" baja el archivo; "cancelar" (chiquito) cierra sin descargar.
+3. **Encuesta (una vez por ejecutivo)**: si ese ejecutivo nunca calificó, aparece el modal con estrellas + **comentario obligatorio** (mín. 3 letras). Se puede salir con "ahora no" (aborta esa descarga; la encuesta vuelve a aparecer en la próxima). Se guarda con el nombre del ejecutivo.
+4. **Modal de donación (en cada descarga)**: "maverix es gratis — mantenerlo, no" + alias `palta.camote.mp` (click = copiar). Botón "descargar" baja el archivo; "cancelar" cierra sin descargar.
 5. El CSV se descarga como **`Maverix - mensaje AAAA-MM-DD.csv`** y registra un evento `download` con la cantidad de filas.
 6. En `/admin` (con clave): stats, tabla "quién usa la página" (click en una fila = detalle de cada ingreso/descarga con fecha-hora + sus calificaciones y comentarios) y lista completa de opiniones con `@usuario`.
+
+## Diseño (tema MONOLITH, igual que HERMES)
+
+Desde 2026-08-20 la app usa el **mismo sistema de diseño que la app de escritorio HERMES** (tokens sacados de `hermes_theme.py`):
+
+- **Claro por defecto** (fondo `#F1F0ED`, tarjetas blancas, texto `#15151A`) con **modo oscuro** (`#0A0A0C` / `#131316`) vía botón "tema" en la topbar. Se recuerda en `localStorage` (`maverix_theme`) y respeta `prefers-color-scheme` en la primera visita. El `/admin` comparte la misma clave.
+- **Acento verde WhatsApp** (`#0F7A46` claro / `#1FA463` oscuro), radios 18/14/10/8 (card/section/control/chip), fuente **Inter** (+ IBM Plex Mono para datos).
+- Foco visible por teclado en todo lo interactivo (`:focus-visible` verde), chips/estrellas/área de carga operables con Enter/Espacio, `prefers-reduced-motion` apaga todas las animaciones (incluidas las de JS).
 
 ## Endpoints
 
