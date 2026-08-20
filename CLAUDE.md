@@ -1,0 +1,42 @@
+# CLAUDE.md — Creador-Mensajes (MAVERIX)
+
+Se carga solo al trabajar en este repo. Info general y accesos: `proyectos/Creador-Mensajes.md` en el vault de Obsidian. Log de cambios: `proyectos/Creador-Mensajes-historial.md`.
+
+📚 Detalle técnico en [`LECCIONES.md`](LECCIONES.md) (parseo de CSV con comillas, el `+` que Excel se come, GitHub Pages). Creado el 2026-08-20 desde el `_lecciones.md` del vault.
+
+## Qué es
+
+Herramienta web para los ejecutivos de MAVERIX: suben un CSV y les devuelve teléfonos `+549` con mensajes personalizados, listos para cargar en HERMES. Gate por ejecutivo (215 usuarios), encuesta por ejecutivo, panel de uso en `/admin`.
+
+En producción: **https://creador.fidelizador.online**
+
+Node puro (`http`/`fs`), sin dependencias npm. Imagen `node:20-alpine`, build de segundos.
+
+## 🔴 Reglas duras
+
+1. **La rama de deploy es `master`**, no `main`.
+
+2. **En EasyPanel el proyecto es `berna_toca_esto_y_te_rompo_la_chota`, NO `redhawk`.**
+   Servicio `creador-mensajes`, volumen en `/data`. Si `inspectService` o `deployService` devuelve `NOT_FOUND` con el proyecto "obvio", iterar sobre todos los proyectos de `listProjects` antes de asumir que el servicio no existe.
+
+3. **NO reactivar GitHub Pages.** Se desactivó el 2026-06-03: el doble hosting rompía la encuesta — el `github.io` servía el HTML pero los endpoints daban 405 y los datos se perdían, mientras la app real andaba bien. **Se ve idéntico**, por eso costó encontrarlo. Si reaparece, volver a desactivarlo.
+
+4. **El dominio propio es el bueno; el `*.easypanel.host` se borró.**
+   Su DNS lo maneja EasyPanel y **no resolvía en los celulares de los ejecutivos**: a Berna le abría (lo tenía cacheado) y a nadie más. Diagnóstico-regla: *si al dueño le abre y a todos los demás no, en redes distintas, es el DNS del dominio que no controlás.*
+
+5. **Un backend caído no debe inutilizar la herramienta.**
+   La encuesta y la telemetría usan `AbortController` con timeout + contador de fallos: tras N reintentos guardan local y dejan seguir. El patrón completo de resiliencia (uncaughtException que no mata, clientError, fallback de GET a `index.html`, graceful SIGTERM, HEALTHCHECK) está en el commit `eda083e`.
+
+## Cosas que se preguntan seguido
+
+- *"No me sale la encuesta"* → ese ejecutivo **ya calificó en ese navegador** (flag `maverix_fb_sent_<user>`). Es una vez por ejecutivo, a propósito.
+- Agregar o sacar ejecutivos → editar `EJECUTIVOS` en `index.html` + redeploy.
+- El `ADMIN_KEY` se deja sin rotar a propósito: solo mide uso, no protege datos sensibles.
+
+## Deploy
+
+```bash
+curl -s -X POST "https://bm6z1s.easypanel.host/api/trpc/services.app.deployService" \
+  -H "Authorization: Bearer <API key EasyPanel>" -H "Content-Type: application/json" \
+  -d '{"json":{"projectName":"berna_toca_esto_y_te_rompo_la_chota","serviceName":"creador-mensajes"}}'
+```
