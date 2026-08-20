@@ -35,8 +35,16 @@ Node puro (`http`/`fs`), sin dependencias npm. Imagen `node:20-alpine`, build de
 
 ## Deploy
 
+**El push a `master` NO deploya solo** (`autoDeploy:false`). Hay que dispararlo a mano, por cualquiera de estas dos vías:
+
 ```bash
+# 1) Token webhook del servicio (no necesita la API key; tokens en el vault: credenciales/easypanel)
+curl -s -X POST "http://84.46.252.202:3000/api/deploy/<token de creador-mensajes>"
+
+# 2) tRPC con la API key de EasyPanel
 curl -s -X POST "https://bm6z1s.easypanel.host/api/trpc/services.app.deployService" \
   -H "Authorization: Bearer <API key EasyPanel>" -H "Content-Type: application/json" \
   -d '{"json":{"projectName":"berna_toca_esto_y_te_rompo_la_chota","serviceName":"creador-mensajes"}}'
 ```
+
+Verificar que entró (smoke test): `curl -s https://creador.fidelizador.online/ | grep <string de la versión nueva>`.
