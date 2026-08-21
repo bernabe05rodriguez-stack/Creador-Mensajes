@@ -17,10 +17,10 @@ Al abrir la página pide el **usuario del ejecutivo** (autocompletado sobre una 
 ## Flujo de uso
 
 1. **Al abrir la página**: modal "¿Qué ejecutivo sos?" con autocompletado sobre la lista fija (const `EJECUTIVOS` en `index.html`, 215 usuarios). Solo deja continuar con un nombre de la lista; queda en `localStorage` (`maverix_user`) y registra un evento `login`.
-2. La persona procesa su CSV y aprieta "descargar csv".
+2. La persona procesa su CSV y aprieta **«Descargar CSV»**.
 3. **Encuesta (una vez por ejecutivo)**: si ese ejecutivo nunca calificó, aparece el modal con estrellas + **comentario obligatorio** (mín. 3 letras). Se puede salir con "ahora no" (aborta esa descarga; la encuesta vuelve a aparecer en la próxima). Se guarda con el nombre del ejecutivo.
-4. **Modal de donación (en cada descarga)**: "maverix es gratis — mantenerlo, no" + alias `palta.camote.mp` (click = copiar). Botón "descargar" baja el archivo; "cancelar" cierra sin descargar.
-5. El CSV se descarga como **`Maverix - mensaje AAAA-MM-DD.csv`** y registra un evento `download` con la cantidad de filas.
+4. **Modal de donación (en cada descarga)**: "MAVERIX es gratis — mantenerlo, no" + alias `palta.camote.mp` (click = copiar). Botón **«Continuar»** sigue al paso del nombre; «Cancelar» cierra sin descargar.
+5. **Nombre del archivo**: antes de que baje, un modal pregunta cómo llamarlo. Viene precargado con **`Maverix - mensaje AAAA-MM-DD`** (fecha ISO para que ordenen cronológico) y el texto queda seleccionado, así se puede tipear encima. El `.csv` va fijo al costado del campo: no se edita ni se duplica si el usuario lo escribe. Los caracteres que Windows no acepta (`\ / : * ? " < > |`) se cambian por `-` en vez de rechazar el nombre. Enter descarga, Escape / click afuera / «Cancelar» cierran sin descargar. Se registra un evento `download` con la cantidad de filas.
 6. En `/admin` (con clave): stats, tabla "quién usa la página" (click en una fila = detalle de cada ingreso/descarga con fecha-hora + sus calificaciones y comentarios) y lista completa de opiniones con `@usuario`.
 
 ## El paso 3: armar el mensaje

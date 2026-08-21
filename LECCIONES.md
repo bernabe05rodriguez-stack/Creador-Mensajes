@@ -62,6 +62,25 @@ cuando estaba vacío, y el export no validaba nada — se podía descargar un CS
 con el texto de ejemplo como mensaje real a cientos de clientes. Ahora devuelve
 sólo lo escrito de verdad y la descarga se bloquea con un aviso.
 
+### El nombre del archivo lo elige el usuario (2026-08-21)
+
+Antes el CSV bajaba directo con el nombre puesto por la página. Ahora hay un
+modal al final del flujo (después de la donación) que deja editarlo.
+
+Cosas a no romper si se toca:
+
+- **El `.csv` no se edita.** Va como `<span>` fijo dentro del campo, y
+  `cleanFileName()` igual saca un `.csv` que el usuario haya escrito, para que
+  no quede `archivo.csv.csv`.
+- **Se sanea, no se rechaza.** Windows no acepta `\ / : * ? " < > |` ni punto o
+  espacio al final; un nombre inválido hace que la descarga falle **sin decir
+  por qué**. Se reemplazan por `-` en silencio: el ejecutivo no tiene por qué
+  saber esa lista.
+- **`a.download` no controla el explorador de archivos.** Si Chrome tiene
+  activado *"Preguntar dónde guardar cada archivo"*, el explorador se abre igual
+  — pero ahora aparece con el nombre ya puesto. Eso es una preferencia del
+  navegador (`chrome://settings/downloads`), no algo que la página pueda cambiar.
+
 ### Creador-Mensajes (ex MensajesMasivos) - CSV + GitHub Pages
 - *CSV con campos entre comillas*: Un `split(';')` simple no alcanza cuando los campos están envueltos en `"..."`. Hay que hacer un parser custom que trackee `inQuotes` para no romper campos que contengan `;` o `""`
 - *Signo + en CSV abierto con Excel*: Excel interpreta `+549...` como numero y pierde el `+`. Solucion: exportar como formula `="+549XXXXXXX,"` que Excel evalua como texto literal

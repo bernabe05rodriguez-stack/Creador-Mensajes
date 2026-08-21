@@ -438,6 +438,13 @@
         .ac-item b { color: var(--accent-text); font-weight: 600; }
         .ac-item:hover, .ac-item.sel { background: var(--accent-dim); color: var(--ink); }
         .gate-err { color: var(--danger); font-size: 0.8rem; min-height: 20px; margin: 4px 0 8px; }
+        /* El ".csv" va fijo adentro del campo: es parte del nombre pero no se
+           edita, asi nadie lo borra sin querer ni lo escribe dos veces. */
+        .name-wrap input { padding-right: 52px; font-family: var(--mono); font-size: 0.86rem; }
+        .name-ext {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            font-family: var(--mono); font-size: 0.86rem; color: var(--faint); pointer-events: none;
+        }
 
         /* ===== Donacion (antes de descargar) ===== */
         .don-alias {
@@ -722,7 +729,24 @@
             <div class="don-alias" id="donAlias" tabindex="0" role="button">palta.camote.mp<span class="don-copy">Copiar</span></div>
             <div class="fb-actions">
                 <button class="don-cancel" id="donCancel">Cancelar</button>
-                <button class="btn-send" id="donGo">Descargar</button>
+                <button class="btn-send" id="donGo">Continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nombre del archivo: ultimo paso antes de que baje -->
+    <div class="fb-overlay" id="nameOverlay">
+        <div class="fb-modal gate-modal" role="dialog" aria-modal="true">
+            <h3>&iquest;C&oacute;mo quer&eacute;s llamar al archivo?</h3>
+            <p class="fb-sub">Pod&eacute;s dejar el nombre que viene o cambiarlo.</p>
+            <div class="ac-wrap name-wrap">
+                <input type="text" id="nameInput" autocomplete="off" spellcheck="false" aria-label="Nombre del archivo">
+                <span class="name-ext">.csv</span>
+            </div>
+            <div class="gate-err" id="nameErr"></div>
+            <div class="fb-actions">
+                <button class="don-cancel" id="nameCancel">Cancelar</button>
+                <button class="btn-send" id="nameGo">Descargar</button>
             </div>
         </div>
     </div>
@@ -1295,13 +1319,75 @@
         });
         document.getElementById('donGo').addEventListener('click', () => {
             donOverlay.classList.remove('show');
-            exportCSV();
+            openFileName();
         });
         document.getElementById('donCancel').addEventListener('click', () => {
             donOverlay.classList.remove('show');
         });
 
-        function exportCSV() {
+        // ========== NOMBRE DEL ARCHIVO (ultimo paso antes de descargar) ==========
+        // Pedido de Berna (2026-08-21): poder editar el nombre ANTES de que baje,
+        // en vez de que se descargue derecho con el nombre puesto por la pagina.
+        const nameOverlay = document.getElementById('nameOverlay');
+        const nameInput = document.getElementById('nameInput');
+        const nameErr = document.getElementById('nameErr');
+
+        function defaultFileName() {
+            // Fecha al final (AAAA-MM-DD asi ordenan solos en la carpeta)
+            const d = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            return 'Maverix - mensaje ' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+        }
+
+        // Windows no acepta \ / : * ? " < > | en un nombre de archivo, y un nombre
+        // invalido hace que la descarga falle sin decir por que. Se limpian en vez
+        // de rechazar: el usuario no tiene por que saber la lista.
+        function cleanFileName(val) {
+            return String(val)
+                .replace(/\.csv$/i, '')          // si lo escribio igual, no se duplica
+                .replace(/[\\/:*?"<>|]/g, '-')
+                .replace(/[\x00-\x1f]/g, '')
+                .replace(/\s{2,}/g, ' ')
+                .replace(/^[\s.]+|[\s.]+$/g, '') // Windows tampoco quiere punto ni espacio al final
+                .slice(0, 100);
+        }
+
+        function openFileName() {
+            nameErr.textContent = '';
+            nameInput.value = defaultFileName();
+            nameOverlay.classList.add('show');
+            setTimeout(() => {
+                nameInput.focus();
+                nameInput.select();   // se puede tipear encima sin borrar a mano
+            }, 60);
+        }
+
+        function closeFileName() {
+            nameOverlay.classList.remove('show');
+        }
+
+        function confirmFileName() {
+            const clean = cleanFileName(nameInput.value);
+            if (!clean) { nameErr.textContent = 'Poné un nombre para el archivo.'; nameInput.focus(); return; }
+            closeFileName();
+            exportCSV(clean + '.csv');
+        }
+
+        document.getElementById('nameGo').addEventListener('click', confirmFileName);
+        document.getElementById('nameCancel').addEventListener('click', () => {
+            closeFileName();
+            showToast('Descarga cancelada');
+        });
+        nameInput.addEventListener('input', () => { nameErr.textContent = ''; });
+        nameInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); confirmFileName(); }
+        });
+        nameOverlay.addEventListener('click', e => { if (e.target === nameOverlay) closeFileName(); });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && nameOverlay.classList.contains('show')) closeFileName();
+        });
+
+        function exportCSV(fileName) {
             if (!contactRows.length) { showToast('No hay teléfonos para exportar'); return; }
             const tpls = getTemplates();
             if (!tpls.length) { showToast('Escribí el mensaje antes de descargar'); return; }
@@ -1325,10 +1411,9 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            // Fecha al final del nombre (AAAA-MM-DD asi ordenan solos en la carpeta)
-            const d = new Date();
-            const pad = n => String(n).padStart(2, '0');
-            a.download = 'Maverix - mensaje ' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '.csv';
+            // El nombre lo elige el usuario en el modal; si por algo llega vacio
+            // (una llamada vieja), cae al de siempre.
+            a.download = fileName || (defaultFileName() + '.csv');
             a.click();
             URL.revokeObjectURL(url);
             showToast('CSV descargado · ' + contactRows.length + ' teléfonos');
