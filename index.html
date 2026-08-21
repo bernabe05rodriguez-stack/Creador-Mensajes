@@ -959,14 +959,13 @@
             const reader = new FileReader();
             reader.onload = e => {
                 parseCSV(e.target.result);
+                // Se cuenta con la MISMA funcion que despues separa para
+                // exportar: si no, el numero que se muestra al cargar el
+                // archivo no coincide con las filas que salen en el CSV.
                 let totalPhones = 0;
                 rawData.forEach(row => {
                     phoneColNames.forEach(col => {
-                        const val = row[col];
-                        if (!val) return;
-                        if (col === 'Telefono_1' && val.includes('-')) {
-                            totalPhones += val.split('-').filter(n => n.trim()).length;
-                        } else totalPhones++;
+                        totalPhones += separarNumeros(row[col]).length;
                     });
                 });
                 setTimeout(() => {
@@ -1025,14 +1024,10 @@
             phoneColsEl.innerHTML = '';
             phoneColNames.forEach(col => {
                 if (!headers.includes(col)) return;
+                // Misma funcion que usa la exportacion, por el mismo motivo:
+                // el numerito del chip tiene que ser lo que va a salir.
                 let count = 0;
-                rawData.forEach(r => {
-                    const val = r[col];
-                    if (!val) return;
-                    if (col === 'Telefono_1' && val.includes('-'))
-                        count += val.split('-').filter(n => n.trim()).length;
-                    else count++;
-                });
+                rawData.forEach(r => { count += separarNumeros(r[col]).length; });
                 const chip = document.createElement('div');
                 chip.className = 'chip' + (count > 0 ? ' active' : '');
                 chip.innerHTML = `${col}<span class="chip-count">${count}</span>`;
@@ -1211,20 +1206,60 @@
         }
 
         // ========== CONTACT ROWS ==========
+        // Un movil argentino en formato internacional es SIEMPRE 549 + 10
+        // digitos, y no hay codigo de area que empiece con 9. Con eso alcanza
+        // para dejar cualquier variante del Informe de Cuentas en los 10
+        // digitos pelados, que es lo unico que se exporta.
+        function normalizarNumero(valor) {
+            let d = String(valor || '').replace(/\D/g, '');
+            if (!d) return '';
+            // Prefijo pegado mas de una vez: "5495492616414595".
+            while (d.length > 13 && d.startsWith('549') && d.slice(3).startsWith('54')) d = d.slice(3);
+            if (d.startsWith('549')) d = d.slice(3);
+            else if (d.startsWith('54')) d = d.slice(2);
+            d = d.replace(/^0+/, '');          // 0 de acceso
+            return d;
+        }
+
+        // Un numero suelto son 10 digitos. Una celda puede traer varios.
+        //
+        // ⚠️ NO alcanza con cortar por el guion: un solo numero se escribe
+        // "261 641-4595" y cortarlo da "261641" y "4595". El criterio es el
+        // LARGO: si al cortar queda algun pedazo de menos de 10 digitos,
+        // entonces el separador era parte del numero y la celda es una sola.
+        function separarNumeros(valor) {
+            const bruto = String(valor || '');
+            const partes = bruto.split(/[-/,;]/).map(p => normalizarNumero(p)).filter(Boolean);
+            const cortoBien = partes.length > 1 && partes.every(p => p.length >= 10);
+            const base = cortoBien ? partes : [normalizarNumero(bruto)].filter(Boolean);
+            // Y varios pegados SIN separador: 20, 30 o 40 digitos.
+            const salida = [];
+            base.forEach(p => {
+                if (p.length > 10 && p.length % 10 === 0) {
+                    for (let i = 0; i < p.length; i += 10) salida.push(p.slice(i, i + 10));
+                } else {
+                    salida.push(p);
+                }
+            });
+            return salida;
+        }
+
         function buildContactRows() {
             contactRows = [];
             rawData.forEach((row, rowIdx) => {
                 selectedPhoneCols.forEach(col => {
                     const val = row[col];
                     if (!val || !val.trim()) return;
-                    if (col === 'Telefono_1' && val.includes('-')) {
-                        val.split('-').forEach(num => {
-                            const clean = num.trim();
-                            if (clean) contactRows.push({ rowIdx, row, col, number: clean });
-                        });
-                    } else {
-                        contactRows.push({ rowIdx, row, col, number: val.trim() });
-                    }
+                    // ⚠️ Antes esto solo separaba los unidos por guion en
+                    // Telefono_1, y anteponia "+549" al valor CRUDO. En
+                    // Telefono_2..9 los numeros pegados salian como uno solo
+                    // (23 digitos) y una columna que ya viniera en formato
+                    // internacional daba "+5495492616414595". Los dos casos
+                    // llegaban a HERMES y no se podia enviar. Ahora se separa y
+                    // se normaliza en TODAS las columnas.
+                    separarNumeros(val).forEach(number => {
+                        contactRows.push({ rowIdx, row, col, number });
+                    });
                 });
             });
             updateExportStats();
@@ -1397,6 +1432,9 @@
             const lines = [headerRow.map(csvField).join(sep)];
 
             contactRows.forEach((c, i) => {
+                // c.number YA viene normalizado a 10 digitos desde
+                // buildContactRows: aca solo se le pone el prefijo y el envoltorio
+                // ="...," que evita que Excel se coma el + y los ceros.
                 const phone = '="+549' + c.number + ',"';
                 const msg = buildMessage(c.row, i, tpls);
                 // El mensaje se sanea (no se escapa): sale sin comillas, tal
