@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>maverix — creador de mensajes</title>
-    <meta name="description" content="maverix — generá mensajes masivos personalizados desde tu CSV en segundos.">
+    <title>MAVERIX — Creador de Mensajes</title>
+    <meta name="description" content="MAVERIX — Generá mensajes masivos personalizados desde tu CSV en segundos.">
     <meta name="theme-color" content="#F1F0ED">
     <script>
         // Tema antes del primer pintado: sin esto, al cargar en oscuro se ve
@@ -25,12 +25,12 @@
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="maverix — creador de mensajes">
+    <meta property="og:title" content="MAVERIX — Creador de Mensajes">
     <meta property="og:description" content="Generá mensajes masivos personalizados desde tu CSV en segundos.">
     <meta property="og:image" content="https://creador.fidelizador.online/og-image.png">
     <meta property="og:url" content="https://creador.fidelizador.online/">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="maverix — creador de mensajes">
+    <meta name="twitter:title" content="MAVERIX — Creador de Mensajes">
     <meta name="twitter:description" content="Generá mensajes masivos personalizados desde tu CSV en segundos.">
     <meta name="twitter:image" content="https://creador.fidelizador.online/og-image.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,6 +292,33 @@
         }
         .msg-area textarea::placeholder { color: var(--faint); }
         .msg-area textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: var(--surface); }
+
+        /* Cada mensaje es una tarjeta (caja + su vista previa). Con un solo
+           mensaje la cabecera se oculta y la pantalla se ve igual que siempre. */
+        .msg-list { flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 20px; }
+        .msg-card { display: flex; flex-direction: column; }
+        .msg-card textarea { flex: none; width: 100%; min-width: 0; }
+        .msg-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .msg-card-num {
+            font-family: var(--sans); font-size: 0.72rem; font-weight: 600; color: var(--faint);
+            text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .msg-card-btns { margin-left: auto; display: flex; gap: 6px; }
+        .mini-btn {
+            background: var(--surface); color: var(--muted); border: 1px solid var(--line-2);
+            padding: 4px 11px; border-radius: var(--r-chip); cursor: pointer;
+            font-family: var(--sans); font-size: 0.74rem; font-weight: 500; transition: all 0.15s;
+        }
+        .mini-btn:hover { color: var(--ink); border-color: var(--faint); }
+        .mini-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+        .msg-foot { display: flex; align-items: center; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+        .btn-add {
+            background: var(--accent-dim); color: var(--accent-text); border: 1px dashed var(--accent);
+            padding: 9px 16px; border-radius: var(--r-control); cursor: pointer;
+            font-family: var(--sans); font-size: 0.84rem; font-weight: 600; transition: all 0.2s;
+        }
+        .btn-add:hover { background: var(--accent); color: var(--on-accent); border-style: solid; }
+        .msg-rot { font-family: var(--mono); font-size: 0.74rem; color: var(--faint); letter-spacing: 0.3px; }
         /* bloque interno: hundido respecto de la tarjeta */
         .variables-panel {
             min-width: 210px; max-height: 250px; overflow-y: auto;
@@ -320,7 +347,6 @@
         }
         .msg-preview::before { content: 'vista previa'; display: block; font-family: var(--sans); font-weight: 600; font-size: 0.7rem; color: var(--faint); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; }
         .msg-preview strong { color: var(--accent-text); font-weight: 600; }
-        .rot-note { display: block; margin-top: 8px; font-family: var(--mono); font-size: 0.7rem; color: var(--faint); letter-spacing: 0.3px; }
         .hint { font-size: 0.88rem; color: var(--muted); margin-bottom: 18px; line-height: 1.65; }
         .hint strong { color: var(--ink); }
         .hint code { color: var(--accent-text); background: var(--accent-dim); padding: 2px 6px; border-radius: 5px; font-size: 0.8rem; font-family: var(--mono); }
@@ -533,8 +559,8 @@
         /* El bloque de archivo cargado entra desde arriba. */
         .file-loaded.show { animation: fadeIn 0.4s var(--ease) both; }
 
-        /* El aviso de rotación aparece suave cuando se escribe "---". */
-        .rot-note { animation: fadeIn 0.3s var(--ease) both; }
+        /* El aviso de rotación aparece suave al agregar un mensaje. */
+        .msg-rot { animation: fadeIn 0.3s var(--ease) both; }
 
         .confetti { position: fixed; top: -12px; width: 8px; height: 8px; z-index: 300; pointer-events: none; opacity: 0; animation: confettiFall linear forwards; }
         @keyframes confettiFall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 0.9; transform: translateY(102vh) rotate(600deg); } }
@@ -584,13 +610,13 @@
     <div class="container">
         <header class="topbar">
             <div class="brand"><i class="dot"></i>maverix</div>
-            <button class="theme-toggle" id="themeToggle" title="cambiar tema" aria-label="cambiar tema">
+            <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema">
                 <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
                 <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-                <span class="toggle-label">tema</span>
+                <span class="toggle-label">Tema</span>
             </button>
         </header>
-        <p class="tagline">Generá mensajes masivos personalizados desde tu <span class="c">Informe de Cuentas</span> — listos para cargar en <span class="c">HERMES</span>. <a href="#" class="tut-link" id="taglineTutorial">¿cómo funciona?</a></p>
+        <p class="tagline">Generá mensajes masivos personalizados desde tu <span class="c">Informe de Cuentas</span> — listos para cargar en <span class="c">HERMES</span>. <a href="#" class="tut-link" id="taglineTutorial">¿Cómo funciona?</a></p>
 
         <!-- Progress -->
         <div class="progress" id="progress">
@@ -607,7 +633,7 @@
 
         <!-- STEP 1: Upload -->
         <div class="step" id="step1">
-            <h2><span class="step-num">1</span>subí tu archivo csv</h2>
+            <h2><span class="step-num">1</span>Subí tu archivo CSV</h2>
             <div class="upload-area" id="uploadArea" tabindex="0" role="button">
                 <p class="up-prompt">Arrastrá <strong>Informe de Cuentas.csv</strong> acá, o <span class="act">explorá tus archivos</span></p>
                 <input type="file" id="fileInput" accept=".csv,.txt">
@@ -620,65 +646,69 @@
             <p class="try-demo">¿Primera vez? <a href="#" id="loadDemo">Probá con un ejemplo</a> para ver cómo funciona.</p>
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
-                <p>procesando archivo...</p>
+                <p>Procesando archivo...</p>
             </div>
             <div class="file-loaded" id="fileLoaded">
                 <div>
                     <div class="file-name" id="fileName"></div>
                     <div class="file-stats" id="fileStats"></div>
                 </div>
-                <button class="btn-remove" id="btnRemoveFile">cambiar</button>
+                <button class="btn-remove" id="btnRemoveFile">Cambiar</button>
             </div>
         </div>
 
         <!-- STEP 2: Phone columns -->
         <div class="step disabled" id="step2">
-            <h2><span class="step-num">2</span>columnas de teléfono</h2>
+            <h2><span class="step-num">2</span>Columnas de teléfono</h2>
             <div class="chip-group" id="phoneCols"></div>
         </div>
 
         <!-- STEP 3: Message template -->
         <div class="step disabled" id="step3">
-            <h2><span class="step-num">3</span>tu mensaje personalizado</h2>
+            <h2><span class="step-num">3</span>Tu mensaje personalizado</h2>
             <p class="hint">
                 Usá <code>{NombreColumna}</code> para insertar datos. <code>{$ Asig.}</code> y <code>{$ Hist.}</code> se formatean como pesos.<br>
-                ¿Varios mensajes? Separalos con una línea de <code>---</code> y se van a ir <strong>rotando</strong> entre los contactos (así los envíos no salen todos iguales).
+                Los <strong>saltos de línea</strong> se respetan: el mensaje le llega a WhatsApp con el mismo formato que ves en la vista previa.<br>
+                ¿Querés variar el texto? Tocá <strong>«Agregar otro mensaje»</strong> y se van a ir <strong>rotando</strong> entre los contactos (así los envíos no salen todos iguales).
             </p>
             <div class="msg-area">
-                <textarea id="msgTemplate" placeholder="Hola {Razon Social}, te contactamos por tu cuenta {Cuenta}. Tu saldo es de {$ Asig.}. Contactanos para regularizar tu situación."></textarea>
+                <div class="msg-list" id="msgList"></div>
                 <div class="variables-panel" id="varsPanel">
                     <p>Variables</p>
                 </div>
             </div>
-            <div class="msg-preview" id="msgPreview">esperando mensaje...</div>
+            <div class="msg-foot">
+                <button class="btn-add" id="btnAddMsg" type="button">+ Agregar otro mensaje</button>
+                <span class="msg-rot" id="msgRot"></span>
+            </div>
         </div>
 
         <!-- STEP 4: Extra columns -->
         <div class="step disabled" id="step4">
-            <h2><span class="step-num">4</span>columnas extra en el archivo</h2>
+            <h2><span class="step-num">4</span>Columnas extra en el archivo</h2>
             <p class="hint">El archivo siempre lleva <strong>Telefono</strong> y <strong>Mensaje</strong>. Sumá columnas extra si querés llevar más datos del informe.</p>
             <div class="chip-group" id="extraColsChips"></div>
         </div>
 
         <!-- STEP 5: Export -->
         <div class="step disabled" id="step5">
-            <h2><span class="step-num">5</span>descargá tu archivo</h2>
-            <p class="hint">El csv que baja se carga directo en <strong>HERMES</strong> con el botón <strong>«Cargar mensajes (MAVERIX)»</strong>.</p>
+            <h2><span class="step-num">5</span>Descargá tu archivo</h2>
+            <p class="hint">El CSV que baja se carga directo en <strong>HERMES</strong> con el botón <strong>«Cargar mensajes (MAVERIX)»</strong>.</p>
             <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
-                <button class="btn btn-export" id="btnExportCSV">descargar csv</button>
+                <button class="btn btn-export" id="btnExportCSV">Descargar CSV</button>
                 <div class="stats" id="exportStats"></div>
             </div>
         </div>
 
         <div class="footer">
-            <span>hecho por <b>brodriguez</b></span>
+            <span>Hecho por <b>brodriguez</b></span>
             <span class="sep">·</span>
-            <a href="#" id="footerTutorial" class="footer-link">cómo funciona</a>
+            <a href="#" id="footerTutorial" class="footer-link">Cómo funciona</a>
             <span class="sep">·</span>
-            <a href="#" id="footerFeedback" class="footer-link">mejoras o sugerencias</a>
+            <a href="#" id="footerFeedback" class="footer-link">Mejoras o sugerencias</a>
             <span class="sep">·</span>
-            <span>ejecutivo: <b id="footerUserName">&mdash;</b></span>
-            <a href="#" id="footerUserChange" class="footer-link">cambiar</a>
+            <span>Ejecutivo: <b id="footerUserName">&mdash;</b></span>
+            <a href="#" id="footerUserChange" class="footer-link">Cambiar</a>
         </div>
     </div>
 
@@ -687,12 +717,12 @@
     <!-- Donacion: antes de descargar -->
     <div class="fb-overlay" id="donOverlay">
         <div class="fb-modal" role="dialog" aria-modal="true">
-            <h3 style="letter-spacing:0.2px;">maverix es <span style="color: var(--accent-text);font-weight:700;">gratis</span> &mdash; mantenerlo, <span style="color:var(--danger);font-weight:700;">no</span></h3>
+            <h3 style="letter-spacing:0.2px;">MAVERIX es <span style="color: var(--accent-text);font-weight:700;">gratis</span> &mdash; mantenerlo, <span style="color:var(--danger);font-weight:700;">no</span></h3>
             <p class="fb-sub">Banc&aacute; donando lo que puedas al alias:</p>
-            <div class="don-alias" id="donAlias" tabindex="0" role="button">palta.camote.mp<span class="don-copy">copiar</span></div>
+            <div class="don-alias" id="donAlias" tabindex="0" role="button">palta.camote.mp<span class="don-copy">Copiar</span></div>
             <div class="fb-actions">
-                <button class="don-cancel" id="donCancel">cancelar</button>
-                <button class="btn-send" id="donGo">descargar</button>
+                <button class="don-cancel" id="donCancel">Cancelar</button>
+                <button class="btn-send" id="donGo">Descargar</button>
             </div>
         </div>
     </div>
@@ -707,7 +737,7 @@
             </div>
             <div class="gate-err" id="gateErr"></div>
             <div class="fb-actions">
-                <button class="btn-send" id="gateGo" disabled>continuar</button>
+                <button class="btn-send" id="gateGo" disabled>Continuar</button>
             </div>
         </div>
     </div>
@@ -715,33 +745,33 @@
     <!-- Tutorial modal -->
     <div class="fb-overlay" id="tutOverlay">
         <div class="fb-modal tut-modal" role="dialog" aria-modal="true">
-            <h3>&iquest;c&oacute;mo funciona?</h3>
-            <p class="fb-sub">maverix convierte tu <strong>Informe de Cuentas.csv</strong> en una lista de mensajes personalizados &mdash; uno por tel&eacute;fono &mdash; lista para cargar en <strong>HERMES</strong>. sin escribirlos uno por uno.</p>
+            <h3>&iquest;C&oacute;mo funciona?</h3>
+            <p class="fb-sub">MAVERIX convierte tu <strong>Informe de Cuentas.csv</strong> en una lista de mensajes personalizados &mdash; uno por tel&eacute;fono &mdash; lista para cargar en <strong>HERMES</strong>. Sin escribirlos uno por uno.</p>
             <div class="tut-steps">
                 <div class="tut-step">
                     <span class="step-num">1</span>
-                    <div><b>sub&iacute; tu csv</b><p>arrastr&aacute; el archivo o explor&aacute; tus carpetas. tiene que estar separado por <code>;</code>, como el informe original.</p></div>
+                    <div><b>Sub&iacute; tu CSV</b><p>Arrastr&aacute; el archivo o explor&aacute; tus carpetas. Tiene que estar separado por <code>;</code>, como el informe original.</p></div>
                 </div>
                 <div class="tut-step">
                     <span class="step-num">2</span>
-                    <div><b>eleg&iacute; los tel&eacute;fonos</b><p>activ&aacute; o desactiv&aacute; las columnas <code>Telefono_1</code> a <code>Telefono_9</code>. si <code>Telefono_1</code> trae varios n&uacute;meros unidos por <code>-</code>, se separan solos en filas distintas.</p></div>
+                    <div><b>Eleg&iacute; los tel&eacute;fonos</b><p>Activ&aacute; o desactiv&aacute; las columnas <code>Telefono_1</code> a <code>Telefono_9</code>. Si <code>Telefono_1</code> trae varios n&uacute;meros unidos por <code>-</code>, se separan solos en filas distintas.</p></div>
                 </div>
                 <div class="tut-step">
                     <span class="step-num">3</span>
-                    <div><b>arm&aacute; el mensaje</b><p>escribilo una sola vez usando variables: <code>{Razon Social}</code> se reemplaza por el dato real de cada fila. <code>{$ Asig.}</code> y <code>{$ Hist.}</code> salen formateados como pesos. abajo ten&eacute;s la vista previa con datos reales.</p></div>
+                    <div><b>Arm&aacute; el mensaje</b><p>Escribilo una sola vez usando variables: <code>{Razon Social}</code> se reemplaza por el dato real de cada fila. <code>{$ Asig.}</code> y <code>{$ Hist.}</code> salen formateados como pesos. Los saltos de l&iacute;nea se respetan tal cual los escribas. Si quer&eacute;s variar el texto, agreg&aacute; m&aacute;s mensajes y se van rotando entre los contactos. Abajo de cada caja ten&eacute;s la vista previa con datos reales.</p></div>
                 </div>
                 <div class="tut-step">
                     <span class="step-num">4</span>
-                    <div><b>sum&aacute; columnas extra</b><p>el archivo final siempre lleva <code>Telefono</code> y <code>Mensaje</code>. si necesit&aacute;s llevar m&aacute;s datos del informe, marcalos ac&aacute;.</p></div>
+                    <div><b>Sum&aacute; columnas extra</b><p>El archivo final siempre lleva <code>Telefono</code> y <code>Mensaje</code>. Si necesit&aacute;s llevar m&aacute;s datos del informe, marcalos ac&aacute;.</p></div>
                 </div>
                 <div class="tut-step">
                     <span class="step-num">5</span>
-                    <div><b>descarg&aacute;</b><p>obten&eacute;s un csv con una fila por tel&eacute;fono, n&uacute;meros normalizados con <code>+549</code>, listo para cargar en HERMES con el bot&oacute;n <code>Cargar mensajes (MAVERIX)</code>.</p></div>
+                    <div><b>Descarg&aacute;</b><p>Obten&eacute;s un CSV con una fila por tel&eacute;fono, n&uacute;meros normalizados con <code>+549</code>, listo para cargar en HERMES con el bot&oacute;n <code>Cargar mensajes (MAVERIX)</code>.</p></div>
                 </div>
             </div>
-            <p class="tut-note">tus datos no salen de tu navegador: el archivo se procesa localmente y nunca se sube a un servidor.</p>
+            <p class="tut-note">Tus datos no salen de tu navegador: el archivo se procesa localmente y nunca se sube a un servidor.</p>
             <div class="fb-actions">
-                <button class="btn-send" id="tutClose">entendido</button>
+                <button class="btn-send" id="tutClose">Entendido</button>
             </div>
         </div>
     </div>
@@ -750,10 +780,10 @@
     <div class="fb-overlay" id="fbOverlay">
         <div class="fb-modal" role="dialog" aria-modal="true">
             <div id="fbForm">
-                <h3>&iquest;qu&eacute; te pareci&oacute;?</h3>
+                <h3>&iquest;Qu&eacute; te pareci&oacute;?</h3>
                 <p class="fb-sub" id="fbSub">Tu opini&oacute;n ayuda a mejorar la herramienta. Te lleva unos segundos.</p>
 
-                <div class="fb-label">&iquest;qu&eacute; tan &uacute;til te result&oacute;?</div>
+                <div class="fb-label">&iquest;Qu&eacute; tan &uacute;til te result&oacute;?</div>
                 <div class="fb-stars-row">
                     <div class="fb-stars" id="fbStars">
                         <span class="fb-star" data-val="1" tabindex="0">&#9733;</span>
@@ -765,17 +795,17 @@
                     <span class="fb-word" id="fbWord"></span>
                 </div>
 
-                <div class="fb-label">tu comentario</div>
-                <textarea id="fbText" placeholder="qu&eacute; mejorar&iacute;as, qu&eacute; le falta o qu&eacute; te gust&oacute;..."></textarea>
+                <div class="fb-label">Tu comentario</div>
+                <textarea id="fbText" placeholder="Qu&eacute; mejorar&iacute;as, qu&eacute; le falta o qu&eacute; te gust&oacute;..."></textarea>
 
                 <div class="fb-actions">
-                    <button class="don-cancel" id="fbCancel" style="display:none;">ahora no</button>
-                    <button class="btn-send" id="fbSend" disabled>enviar</button>
+                    <button class="don-cancel" id="fbCancel" style="display:none;">Ahora no</button>
+                    <button class="btn-send" id="fbSend" disabled>Enviar</button>
                 </div>
             </div>
             <div class="fb-thanks" id="fbThanks" style="display:none;">
                 <div class="fb-check">✓</div>
-                <h3>&iexcl;gracias!</h3>
+                <h3>&iexcl;Gracias!</h3>
                 <p class="fb-sub" style="margin-bottom:0;">Tu opini&oacute;n fue registrada.</p>
             </div>
         </div>
@@ -802,9 +832,9 @@
         const fileName = document.getElementById('fileName');
         const fileStats = document.getElementById('fileStats');
         const phoneColsEl = document.getElementById('phoneCols');
-        const msgTemplate = document.getElementById('msgTemplate');
         const varsPanel = document.getElementById('varsPanel');
-        const msgPreview = document.getElementById('msgPreview');
+        const msgList = document.getElementById('msgList');
+        const msgRot = document.getElementById('msgRot');
         const exportStats = document.getElementById('exportStats');
         const extraColsChips = document.getElementById('extraColsChips');
 
@@ -854,8 +884,8 @@
             const done = [
                 rawData.length > 0,
                 rawData.length > 0 && selectedPhoneCols.size > 0,
-                msgTemplate.value.trim().length > 0,
-                contactRows.length > 0 && msgTemplate.value.trim().length > 0,
+                getTemplates().length > 0,
+                contactRows.length > 0 && getTemplates().length > 0,
                 exported,
             ];
             const nodes = document.querySelectorAll('#progress .pnode');
@@ -892,11 +922,11 @@
             ].join('\n');
             const file = new File(['\ufeff' + demo], 'ejemplo.csv', { type: 'text/csv' });
             handleFile(file);
-            if (!msgTemplate.value.trim()) {
-                msgTemplate.value = 'Hola {Razon Social}, te escribimos por tu cuenta {Cuenta}. Tenés un saldo de {$ Asig.}. Cualquier duda, respondenos por acá!';
-                msgTemplate.dispatchEvent(new Event('input'));
+            if (!getTemplates().length) {
+                messages = ['Hola {Razon Social}, te escribimos por tu cuenta {Cuenta}.\n\nTenés un saldo de {$ Asig.}.\nCualquier duda, respondenos por acá!'];
+                renderMessages();
             }
-            showToast('ejemplo cargado · 5 teléfonos de prueba');
+            showToast('Ejemplo cargado · 5 teléfonos de prueba');
         });
 
         function handleFile(file) {
@@ -936,7 +966,7 @@
             ['step2','step3','step4','step5'].forEach(s => document.getElementById(s).classList.add('disabled'));
             phoneColsEl.innerHTML = '';
             varsPanel.innerHTML = '<p>Variables</p>';
-            msgPreview.textContent = 'esperando mensaje...';
+            renderMessages();
             extraColsChips.innerHTML = '';
             exportStats.innerHTML = '';
         }
@@ -1002,6 +1032,103 @@
             });
         }
 
+        // ========== MENSAJES ==========
+        // Antes las variantes se escribían todas en un mismo textarea separadas
+        // por una línea de "---". Se descubría poco (una frase en el hint), sólo
+        // se podía previsualizar la primera y había que reescribir el texto
+        // entero para cada variante. Ahora cada mensaje es su propia caja, con
+        // Agregar / Duplicar / Borrar y vista previa propia.
+        //
+        // El "---" se sigue aceptando: si alguien pega un texto viejo que lo
+        // usa, se parte solo en cajas y no pierde nada.
+        const MSG_SEP_RE = /^[ \t]*-{3,}[ \t]*$/m;
+        const MSG_PLACEHOLDER = 'Hola {Razon Social}, te contactamos por tu cuenta {Cuenta}. Tu saldo es de {$ Asig.}. Contactanos para regularizar tu situación.';
+        let messages = [''];
+        let activeMsg = 0;   // caja donde caen las variables del panel
+
+        function splitLegacy(text) {
+            return text.split(new RegExp(MSG_SEP_RE.source, 'm')).map(t => t.trim()).filter(Boolean);
+        }
+
+        function renderMessages(focusIdx) {
+            msgList.innerHTML = '';
+            messages.forEach((text, i) => {
+                const card = document.createElement('div');
+                card.className = 'msg-card';
+
+                // Con un solo mensaje la cabecera sobra: la pantalla queda igual
+                // de simple que antes de que existieran las variantes.
+                const head = document.createElement('div');
+                head.className = 'msg-card-head';
+                if (messages.length < 2) head.style.display = 'none';
+                const num = document.createElement('span');
+                num.className = 'msg-card-num';
+                num.textContent = 'Mensaje ' + (i + 1);
+                const btns = document.createElement('div');
+                btns.className = 'msg-card-btns';
+                const dup = document.createElement('button');
+                dup.type = 'button'; dup.className = 'mini-btn'; dup.textContent = 'Duplicar';
+                dup.addEventListener('click', () => {
+                    messages.splice(i + 1, 0, messages[i]);
+                    renderMessages(i + 1);
+                });
+                const del = document.createElement('button');
+                del.type = 'button'; del.className = 'mini-btn danger'; del.textContent = 'Borrar';
+                del.addEventListener('click', () => {
+                    messages.splice(i, 1);
+                    if (!messages.length) messages = [''];
+                    renderMessages(Math.max(0, i - 1));
+                });
+                btns.appendChild(dup); btns.appendChild(del);
+                head.appendChild(num); head.appendChild(btns);
+
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.placeholder = MSG_PLACEHOLDER;
+                ta.setAttribute('aria-label', 'Mensaje ' + (i + 1));
+                ta.addEventListener('focus', () => { activeMsg = i; });
+                ta.addEventListener('input', () => {
+                    if (MSG_SEP_RE.test(ta.value)) {
+                        const parts = splitLegacy(ta.value);
+                        if (parts.length > 1) {
+                            messages.splice(i, 1, ...parts);
+                            renderMessages(i + parts.length - 1);
+                            showToast('Se separó en ' + parts.length + ' mensajes');
+                            return;
+                        }
+                    }
+                    messages[i] = ta.value;
+                    updatePreview();
+                });
+
+                const prev = document.createElement('div');
+                prev.className = 'msg-preview';
+
+                card.appendChild(head);
+                card.appendChild(ta);
+                card.appendChild(prev);
+                msgList.appendChild(card);
+            });
+
+            if (activeMsg > messages.length - 1) activeMsg = messages.length - 1;
+            if (typeof focusIdx === 'number') {
+                const ta = msgList.querySelectorAll('textarea')[focusIdx];
+                if (ta) {
+                    activeMsg = focusIdx;
+                    ta.focus();
+                    ta.selectionStart = ta.selectionEnd = ta.value.length;
+                }
+            }
+            updatePreview();
+        }
+
+        document.getElementById('btnAddMsg').addEventListener('click', () => {
+            messages.push('');
+            renderMessages(messages.length - 1);
+        });
+
+        renderMessages();   // la primera caja existe desde que carga la página
+
         // ========== VARIABLES ==========
         function renderVariables() {
             const frag = document.createDocumentFragment();
@@ -1015,10 +1142,15 @@
                 btn.className = 'var-btn' + (hotCols.includes(h) ? ' hot' : (moneyCols.includes(h) ? ' money' : ''));
                 btn.textContent = `{${h}}`;
                 btn.addEventListener('click', () => {
-                    const ta = msgTemplate;
+                    // Cae en la última caja que estuvo enfocada (con un solo
+                    // mensaje es siempre la misma, así que no cambia nada).
+                    const tas = msgList.querySelectorAll('textarea');
+                    const ta = tas[activeMsg] || tas[0];
+                    if (!ta) return;
                     const start = ta.selectionStart, end = ta.selectionEnd;
                     const insert = `{${h}}`;
                     ta.value = ta.value.substring(0, start) + insert + ta.value.substring(end);
+                    messages[activeMsg] = ta.value;
                     ta.focus();
                     ta.selectionStart = ta.selectionEnd = start + insert.length;
                     updatePreview();
@@ -1029,23 +1161,28 @@
             varsPanel.appendChild(frag);
         }
 
-        msgTemplate.addEventListener('input', updatePreview);
+        // Cada caja tiene su propia vista previa con datos reales: antes sólo se
+        // veía la primera variante y las demás se escribían a ciegas.
         function updatePreview() {
-            if (!rawData.length) return;
-            const row = rawData.find(r => phoneColNames.some(c => r[c] && r[c].trim())) || rawData[0];
-            const tpls = getTemplates();
-            let msg = tpls[0];
-            msg = msg.replace(/\{([^}]+)\}/g, (m, key) => {
-                if (row[key] === undefined) return m;
-                const val = moneyCols.includes(key) ? formatPeso(row[key]) : row[key];
-                return '<strong>' + escHtml(val) + '</strong>';
+            const row = rawData.length
+                ? (rawData.find(r => phoneColNames.some(c => r[c] && r[c].trim())) || rawData[0])
+                : null;
+            msgList.querySelectorAll('.msg-card').forEach((card, i) => {
+                const prev = card.querySelector('.msg-preview');
+                const txt = (messages[i] || '').trim();
+                if (!txt) { prev.textContent = 'Esperando mensaje...'; return; }
+                if (!row) { prev.textContent = txt; return; }
+                // Se escapa PRIMERO todo el texto y recién después se resaltan
+                // las variables: así lo que escriba el usuario nunca se
+                // interpreta como HTML. Los saltos se ven por white-space.
+                prev.innerHTML = escHtml(txt).replace(/\{([^}]+)\}/g, (m, key) => {
+                    if (row[key] === undefined) return m;
+                    const val = moneyCols.includes(key) ? formatPeso(row[key]) : row[key];
+                    return '<strong>' + escHtml(val) + '</strong>';
+                });
             });
-            // Con varias variantes se avisa cuántas hay: si no, la vista previa
-            // muestra sólo la primera y parece que las demás se perdieron.
-            if (tpls.length > 1) {
-                msg += '<span class="rot-note"> · rotando entre ' + tpls.length + ' mensajes</span>';
-            }
-            msgPreview.innerHTML = msg || 'esperando mensaje...';
+            const n = getTemplates().length;
+            msgRot.textContent = n > 1 ? '· Rotando entre ' + n + ' mensajes, uno por contacto' : '';
             updateProgress();
         }
 
@@ -1101,28 +1238,20 @@
         }
 
         // ========== BUILD MESSAGE ==========
-        // Variantes del mensaje, separadas por una línea con solo "---".
+        // Rotación entre mensajes (pedido de bdelacruz, 2026-08-04: "rotar entre
+        // 1 y 2 mensajes"). No es sólo comodidad: mandar el MISMO texto a
+        // cientos de números seguidos es lo que dispara los filtros de spam de
+        // WhatsApp. Rotando, los envíos se ven distintos entre sí.
         //
-        // Pedido de bdelacruz (2026-08-04): "rotar entre 1 y 2 mensajes". No es
-        // sólo comodidad: mandar el MISMO texto a cientos de números seguidos es
-        // lo que dispara los filtros de spam de WhatsApp. Rotando variantes, los
-        // envíos se ven distintos entre sí.
-        //
-        // Se separan con "---" en vez de agregar más cajas de texto para no
-        // tocar el flujo de 4 pasos que la gente ya sabe usar: quien no ponga
-        // "---" sigue teniendo exactamente el comportamiento de antes.
+        // Sólo devuelve lo que el usuario escribió de verdad: NO cae al
+        // placeholder. Antes sí lo hacía, y con el textarea vacío se podía
+        // descargar un CSV con el texto de ejemplo como mensaje real.
         function getTemplates() {
-            const raw = msgTemplate.value.trim() || msgTemplate.placeholder;
-            const parts = raw
-                .split(/^\s*-{3,}\s*$/m)   // línea que sea solo guiones
-                .map(t => t.trim())
-                .filter(Boolean);
-            return parts.length ? parts : [raw];
+            return messages.map(t => t.trim()).filter(Boolean);
         }
 
-        function buildMessage(row, idx) {
-            const tpls = getTemplates();
-            // Rota por posición del contacto: con 2 variantes, uno y uno.
+        function buildMessage(row, idx, tpls) {
+            // Rota por posición del contacto: con 2 mensajes, uno y uno.
             const tpl = tpls[(idx || 0) % tpls.length];
             return tpl.replace(/\{([^}]+)\}/g, (m, key) => {
                 if (row[key] === undefined) return m;
@@ -1134,7 +1263,8 @@
         // La descarga queda bloqueada hasta contestar la encuesta (una vez por ejecutivo)
         // y despues pasa por el modal de donacion en cada descarga.
         document.getElementById('btnExportCSV').addEventListener('click', () => {
-            if (!contactRows.length) { showToast('no hay teléfonos para exportar'); return; }
+            if (!contactRows.length) { showToast('No hay teléfonos para exportar'); return; }
+            if (!getTemplates().length) { showToast('Escribí el mensaje antes de descargar'); return; }
             if (fbAlreadySent()) { openDonation(); return; }
             pendingExport = true;
             openFeedback(true);
@@ -1148,7 +1278,7 @@
             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); }
         });
         document.getElementById('donAlias').addEventListener('click', () => {
-            const done = () => showToast('alias copiado: ' + DON_ALIAS);
+            const done = () => showToast('Alias copiado: ' + DON_ALIAS);
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(DON_ALIAS).then(done).catch(done);
             } else {
@@ -1172,7 +1302,9 @@
         });
 
         function exportCSV() {
-            if (!contactRows.length) { showToast('no hay teléfonos para exportar'); return; }
+            if (!contactRows.length) { showToast('No hay teléfonos para exportar'); return; }
+            const tpls = getTemplates();
+            if (!tpls.length) { showToast('Escribí el mensaje antes de descargar'); return; }
             const sep = ';';
             const extraArr = headers.filter(h => extraCols.has(h));
             const headerRow = ['Telefono', 'Mensaje', ...extraArr];
@@ -1180,7 +1312,7 @@
 
             contactRows.forEach((c, i) => {
                 const phone = '="+549' + c.number + ',"';
-                const msg = buildMessage(c.row, i);
+                const msg = buildMessage(c.row, i, tpls);
                 // El mensaje se sanea (no se escapa): sale sin comillas, tal
                 // cual lo va a recibir el cliente. Ver csvMessage().
                 const row = [phone, csvMessage(msg)];
@@ -1199,7 +1331,7 @@
             a.download = 'Maverix - mensaje ' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '.csv';
             a.click();
             URL.revokeObjectURL(url);
-            showToast('csv descargado · ' + contactRows.length + ' teléfonos');
+            showToast('CSV descargado · ' + contactRows.length + ' teléfonos');
             logUsage('download', { rows: contactRows.length });
             exported = true;
             updateProgress();
@@ -1225,7 +1357,7 @@
         }
 
         const fbWord = document.getElementById('fbWord');
-        const RATING_WORDS = { 1: 'no me sirvió', 2: 'flojo', 3: 'está bien', 4: 'muy útil', 5: 'excelente' };
+        const RATING_WORDS = { 1: 'No me sirvió', 2: 'Flojo', 3: 'Está bien', 4: 'Muy útil', 5: 'Excelente' };
 
         // Enviar recien se habilita con estrellas + comentario (el comentario es obligatorio)
         function paintStars() {
@@ -1262,7 +1394,7 @@
         fbCancel.addEventListener('click', () => {
             pendingExport = false;
             closeFeedback();
-            showToast('descarga cancelada');
+            showToast('Descarga cancelada');
         });
 
         function openFeedback(gating) {
@@ -1274,7 +1406,7 @@
             fbSub.textContent = gating
                 ? 'Contestá y tu archivo se descarga solo. Te lleva unos segundos.'
                 : 'Tu opinión ayuda a mejorar la herramienta.';
-            fbSend.textContent = gating ? 'enviar y descargar' : 'enviar';
+            fbSend.textContent = gating ? 'Enviar y descargar' : 'Enviar';
             fbCancel.style.display = gating ? '' : 'none';
             fbOverlay.classList.add('show');
         }
@@ -1341,11 +1473,11 @@
                 fbFailCount++;
                 if (fbFailCount >= 2) {
                     // Backend no responde: que la app NO quede inutilizable
-                    showToast('servidor lento, guardada localmente');
+                    showToast('Servidor lento, guardada localmente');
                     fbDoneAndMaybeExport(true);
                 } else {
                     fbSend.disabled = false;
-                    showToast('no se pudo enviar. reintentá.');
+                    showToast('No se pudo enviar. Reintentá.');
                 }
             });
         });
@@ -1363,13 +1495,26 @@
         // escapar: se cambian los caracteres que romperían la fila por
         // equivalentes que se leen igual. Un punto y coma de menos no cambia el
         // mensaje; una comilla de más sí lo arruina.
+        // Los SALTOS DE LÍNEA sí se conservan (2026-08-21). Antes se aplastaban a
+        // un espacio y el mensaje llegaba a WhatsApp como un chorizo de una sola
+        // línea, sin respetar el formato que el ejecutivo había escrito. Un salto
+        // sólo sobrevive dentro de un campo entre comillas (RFC 4180), así que el
+        // mensaje se envuelve SÓLO cuando tiene saltos: el de una sola línea sigue
+        // saliendo pelado, tal como quedó después del fix de pazp.
+        //
+        // Del lado de HERMES esto ya está contemplado: lee con csv.DictReader
+        // (reconstruye el campo multilínea) y escribe el salto en WhatsApp por
+        // uiautomator2, sin mandar Enter — no parte el mensaje en varios envíos.
+        // Tiene que ser LF, no CRLF: en la ruta de tipeo el \r viaja como un
+        // carácter aparte y deja basura en el campo del chat.
         function csvMessage(val) {
-            return String(val)
-                .replace(/[\r\n]+/g, ' ')      // saltos -> espacio (la fila del CSV es una linea)
-                .replace(/;/g, ',')           // el ; es el separador: se reemplaza por coma
-                .replace(/"/g, "'")           // comillas rectas → simples (no rompen la celda)
-                .replace(/\s{2,}/g, ' ')      // espacios repetidos que deja el reemplazo
+            const txt = String(val)
+                .replace(/\r\n?/g, '\n')          // normaliza todo a LF
+                .replace(/[^\S\n]{2,}/g, ' ')     // colapsa espacios/tabs repetidos, NO los saltos
+                .replace(/;/g, ',')               // el ; es el separador: se reemplaza por coma
+                .replace(/"/g, "'")               // comillas rectas → simples (no rompen la celda)
                 .trim();
+            return txt.includes('\n') ? '"' + txt + '"' : txt;
         }
 
         function csvField(val) {
@@ -1487,7 +1632,7 @@
         function confirmGate() {
             const name = gateInput.value.trim().toLowerCase();
             if (EJECUTIVOS.indexOf(name) === -1) {
-                gateErr.textContent = 'ese usuario no está en la lista. escribí las primeras letras y elegilo.';
+                gateErr.textContent = 'Ese usuario no está en la lista. Escribí las primeras letras y elegilo.';
                 return;
             }
             currentUser = name;

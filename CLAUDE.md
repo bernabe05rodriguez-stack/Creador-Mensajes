@@ -2,7 +2,7 @@
 
 Se carga solo al trabajar en este repo. Info general y accesos: `proyectos/Creador-Mensajes.md` en el vault de Obsidian. Log de cambios: `proyectos/Creador-Mensajes-historial.md`.
 
-📚 Detalle técnico en [`LECCIONES.md`](LECCIONES.md) (parseo de CSV con comillas, el `+` que Excel se come, GitHub Pages). Creado el 2026-08-20 desde el `_lecciones.md` del vault.
+📚 Detalle técnico en [`LECCIONES.md`](LECCIONES.md) (cuándo va entre comillas la columna Mensaje, las cajas de mensaje, el `+` que Excel se come, GitHub Pages). Creado el 2026-08-20 desde el `_lecciones.md` del vault.
 
 ## Qué es
 
@@ -24,7 +24,13 @@ Node puro (`http`/`fs`), sin dependencias npm. Imagen `node:20-alpine`, build de
 4. **El dominio propio es el bueno; el `*.easypanel.host` se borró.**
    Su DNS lo maneja EasyPanel y **no resolvía en los celulares de los ejecutivos**: a Berna le abría (lo tenía cacheado) y a nadie más. Diagnóstico-regla: *si al dueño le abre y a todos los demás no, en redes distintas, es el DNS del dominio que no controlás.*
 
-5. **Un backend caído no debe inutilizar la herramienta.**
+5. **No tocar `csvMessage()` sin leer `LECCIONES.md`.**
+   La columna Mensaje sale **sin comillas si es de una línea** (o el cliente las
+   recibe puestas) y **entre comillas si tiene saltos** (única forma de que el
+   salto sobreviva). Siempre LF, nunca CRLF. Las columnas extra usan otro
+   serializador (`csvField()`, RFC 4180): esa asimetría es a propósito.
+
+6. **Un backend caído no debe inutilizar la herramienta.**
    La encuesta y la telemetría usan `AbortController` con timeout + contador de fallos: tras N reintentos guardan local y dejan seguir. El patrón completo de resiliencia (uncaughtException que no mata, clientError, fallback de GET a `index.html`, graceful SIGTERM, HEALTHCHECK) está en el commit `eda083e`.
 
 ## Cosas que se preguntan seguido

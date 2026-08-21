@@ -7,6 +7,61 @@
 
 ---
 
+### La columna Mensaje: cuándo va entre comillas y cuándo no (2026-08-21)
+
+Esta celda tiene dos consumidores con necesidades opuestas, y por eso el CSV usa
+**dos serializadores distintos**: `csvMessage()` para el mensaje y `csvField()`
+(RFC 4180 clásico) para las columnas extra.
+
+| Problema | Fecha | Fix |
+|---|---|---|
+| El cliente final recibía el mensaje **con las comillas puestas** (queja de pazp) | 2026-07-21 | `csvMessage()` dejó de escapar y pasó a *sanear*: `;`→`,`, `"`→`'` |
+| El mensaje llegaba a WhatsApp como **un chorizo de una línea** | 2026-08-21 | Los saltos se conservan y el campo se entrecomilla **sólo si los tiene** |
+
+Reglas que hay que respetar si se vuelve a tocar `csvMessage()`:
+
+1. **Mensaje de una sola línea → sin comillas.** Las herramientas que pegan la
+   celda literal (no todas parsean CSV de verdad) mostrarían las comillas al
+   cliente. Este es el caso mayoritario y no puede regresar.
+2. **Mensaje con saltos → entre comillas, sin alternativa.** Un `\n` sólo
+   sobrevive dentro de un campo entrecomillado (RFC 4180). No hay forma de
+   tener salto de línea *y* campo pelado: si alguien pide las dos cosas, el
+   salto es lo que se pierde.
+3. **LF, nunca CRLF.** HERMES lee con `csv.DictReader` y el `\r` viaja verbatim;
+   en la ruta de tipeo (Lupita/Token) `\r` y `\n` son dos caracteres especiales
+   distintos y dejan basura en el campo del chat. `csvMessage()` normaliza
+   `\r\n?` → `\n` antes de nada.
+4. **No colapsar los saltos al colapsar espacios.** El `.replace(/\s{2,}/g,' ')`
+   original se comía las líneas en blanco. Va con `[^\S\n]{2,}` (espacios y tabs
+   sí, saltos no), o los párrafos se pierden igual que antes.
+5. **Las comillas dobles se sustituyen por simples, no se duplican.** Doblarlas
+   (`""`) es lo correcto según la norma, pero un parser ingenuo se las muestra
+   al cliente. Con `'` se lee igual y no puede romper la celda.
+
+Del lado de HERMES esto ya está contemplado a propósito (`Hermes.py`, el
+comentario de `_is_ascii_safe`: los saltos se insertan por uiautomator2 sin
+mandar Enter, así que el mensaje no se parte en varios envíos).
+
+Test de regresión: `csvMessage()` + round-trip por `csv.DictReader` de Python
+(el mismo parser que usa HERMES) — ver la entrada del 2026-08-21 en el historial.
+
+### La rotación entre mensajes son cajas, no `---` (2026-08-21)
+
+Entre 2026-08-15 y 2026-08-21 las variantes se escribían en un solo textarea
+separadas por una línea de `---`. Problemas que tenía y por los que se cambió:
+sólo se anunciaba en una frase del hint (nadie la encontraba), la vista previa
+mostraba únicamente la primera variante, había que reescribir el texto entero
+para cada una, y una línea decorativa de guiones partía el mensaje sin aviso.
+
+Ahora cada mensaje es su propia caja con **Agregar / Duplicar / Borrar**. El
+`---` se sigue aceptando al escribir o pegar: se parte solo en cajas, así que
+quien aprendió el truco viejo no pierde nada.
+
+**Ojo con el placeholder:** `getTemplates()` caía al `placeholder` del textarea
+cuando estaba vacío, y el export no validaba nada — se podía descargar un CSV
+con el texto de ejemplo como mensaje real a cientos de clientes. Ahora devuelve
+sólo lo escrito de verdad y la descarga se bloquea con un aviso.
+
 ### Creador-Mensajes (ex MensajesMasivos) - CSV + GitHub Pages
 - *CSV con campos entre comillas*: Un `split(';')` simple no alcanza cuando los campos están envueltos en `"..."`. Hay que hacer un parser custom que trackee `inQuotes` para no romper campos que contengan `;` o `""`
 - *Signo + en CSV abierto con Excel*: Excel interpreta `+549...` como numero y pierde el `+`. Solucion: exportar como formula `="+549XXXXXXX,"` que Excel evalua como texto literal

@@ -9,7 +9,7 @@ Al abrir la página pide el **usuario del ejecutivo** (autocompletado sobre una 
 
 ## Estructura
 
-- `index.html` — la app (subir CSV, armar mensaje, exportar) + modal de encuesta + tutorial "¿cómo funciona?" (links en tagline y footer).
+- `index.html` — la app (subir CSV, armar mensaje/s, exportar) + modal de encuesta + tutorial "¿Cómo funciona?" (links en tagline y footer).
 - `admin.html` — panel `/admin` para ver las opiniones (protegido por clave).
 - `server.js` — backend Node puro (sin dependencias): sirve las páginas y guarda/lee las opiniones. Rate limit y healthcheck incluidos.
 - `Dockerfile` — para deploy en EasyPanel.
@@ -22,6 +22,14 @@ Al abrir la página pide el **usuario del ejecutivo** (autocompletado sobre una 
 4. **Modal de donación (en cada descarga)**: "maverix es gratis — mantenerlo, no" + alias `palta.camote.mp` (click = copiar). Botón "descargar" baja el archivo; "cancelar" cierra sin descargar.
 5. El CSV se descarga como **`Maverix - mensaje AAAA-MM-DD.csv`** y registra un evento `download` con la cantidad de filas.
 6. En `/admin` (con clave): stats, tabla "quién usa la página" (click en una fila = detalle de cada ingreso/descarga con fecha-hora + sus calificaciones y comentarios) y lista completa de opiniones con `@usuario`.
+
+## El paso 3: armar el mensaje
+
+- **Variables**: `{NombreColumna}` se reemplaza por el dato real de cada fila. `{$ Asig.}` y `{$ Hist.}` salen formateados como pesos argentinos. El panel de la derecha las inserta en la caja que se esté usando.
+- **Los saltos de línea se respetan** (desde 2026-08-21): lo que se escribe con Enter llega a WhatsApp con el mismo formato. Antes se aplastaban a un espacio y el mensaje salía como un chorizo de una sola línea. En el CSV el campo se entrecomilla **sólo** cuando tiene saltos; el de una línea sigue saliendo pelado para que ninguna herramienta le muestre comillas al cliente (ver `LECCIONES.md`).
+- **Varios mensajes**: el botón «Agregar otro mensaje» suma otra caja, con **Duplicar** y **Borrar**. Se rotan uno por contacto para que los envíos no salgan todos iguales (es lo que dispara los filtros de spam de WhatsApp). Cada caja tiene su propia vista previa con datos reales.
+  - *Antes* las variantes se separaban con una línea de `---` dentro de una sola caja. Se sigue aceptando: si se escribe o pega un texto con `---`, se parte solo en cajas.
+- **No se puede descargar con el mensaje vacío**: antes el textarea vacío caía al texto del placeholder y se podía exportar el ejemplo como mensaje real.
 
 ## Diseño (tema MONOLITH, igual que HERMES)
 
