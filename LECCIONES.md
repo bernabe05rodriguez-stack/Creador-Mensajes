@@ -7,6 +7,32 @@
 
 ---
 
+
+### Concatenar un prefijo sin mirar lo que ya está es un bug esperando el dato correcto (2026-08-21)
+
+- `exportCSV()` armaba la celda del teléfono con `'="+549' + c.number + ',"'` sobre el
+  valor **crudo** de la planilla. Con los Informes de Cuentas de siempre (10 dígitos
+  pelados) anduvo durante meses. El día que una columna Telefono vino en formato
+  internacional, escupió **`+5495492616414595`** y HERMES no pudo enviar a nadie.
+- 📌 **Normalizar es idempotente o no es normalizar.** `normalizarNumero()` saca el
+  `549`/`54`/`0` que ya esté, y encima colapsa el prefijo pegado más de una vez. Un
+  móvil argentino es siempre `549` + 10 dígitos y **no hay código de área que empiece
+  con 9**, así que `549549…` nunca es un número real: con eso alcanza para decidir.
+- 🔴 **Para cortar varios teléfonos de una celda, el criterio es el LARGO, no el
+  separador.** El primer intento partía por `-` y rompía `261 641-4595` en `261641` y
+  `4595` — un número perfectamente válido escrito como lo escribe cualquiera. La regla
+  que sí sirve: si al cortar queda algún pedazo de menos de 10 dígitos, el separador
+  era parte del número y la celda es una sola. Lo cazó un test de 15 casos, no la vista.
+- **La misma función tiene que contar y exportar.** Había tres lugares contando
+  teléfonos con lógicas distintas (el cartel de "N teléfonos", el chip de cada columna
+  y el export). Los dos primeros solo separaban `Telefono_1`, así que la app decía 495
+  y el CSV traía otra cosa. Un contador que no comparte código con lo que cuenta
+  miente apenas cambia una regla.
+- 📌 **Probar contra el código DEPLOYADO, no contra el del disco.** El chequeo final
+  bajó el `index.html` de producción con `curl`, le extrajo las dos funciones
+  balanceando llaves y las corrió con `node` sobre casos reales. Eso comprueba lo que
+  le pasa al usuario, no lo que hay en el working tree.
+
 ### La columna Mensaje: cuándo va entre comillas y cuándo no (2026-08-21)
 
 Esta celda tiene dos consumidores con necesidades opuestas, y por eso el CSV usa

@@ -30,7 +30,26 @@ Node puro (`http`/`fs`), sin dependencias npm. Imagen `node:20-alpine`, build de
    salto sobreviva). Siempre LF, nunca CRLF. Las columnas extra usan otro
    serializador (`csvField()`, RFC 4180): esa asimetría es a propósito.
 
-6. **Un backend caído no debe inutilizar la herramienta.**
+6. **El teléfono se normaliza ANTES de anteponerle el `+549`.**
+   `exportCSV()` hace `'="+549' + c.number + ',"'`, y `c.number` tiene que venir
+   ya en 10 dígitos pelados desde `buildContactRows()` → `separarNumeros()`.
+   Hasta el 2026-08-21 se concatenaba sobre el valor **crudo** de la planilla:
+   si la columna Telefono ya venía en internacional salía `+5495492616414595`,
+   y HERMES no podía enviar. **Idempotencia o no es normalizar.**
+   - ⚠️ **Para cortar varios teléfonos de una celda, el criterio es el LARGO,
+     no el guion.** Un solo número se escribe `261 641-4595`: cortarlo por el
+     guion da `261641` y `4595`. Si al cortar queda algún pedazo de menos de 10
+     dígitos, el separador era parte del número. También se parten los pegados
+     sin separador (20/30/40 dígitos).
+   - ⚠️ **Los tres lugares que cuentan teléfonos usan la MISMA función**: el
+     cartel de "N teléfonos" al cargar, el numerito de cada chip `Telefono_N` y
+     la exportación. Antes los dos primeros contaban con la lógica vieja (solo
+     `Telefono_1`) y mostraban menos de los que después salían en el CSV.
+   - Prueba rápida sin abrir el navegador: extraer `normalizarNumero` y
+     `separarNumeros` del `index.html` con un balanceo de llaves y correrlas con
+     `node`. Así el test no se desincroniza del código que corre de verdad.
+
+7. **Un backend caído no debe inutilizar la herramienta.**
    La encuesta y la telemetría usan `AbortController` con timeout + contador de fallos: tras N reintentos guardan local y dejan seguir. El patrón completo de resiliencia (uncaughtException que no mata, clientError, fallback de GET a `index.html`, graceful SIGTERM, HEALTHCHECK) está en el commit `eda083e`.
 
 ## Cosas que se preguntan seguido
