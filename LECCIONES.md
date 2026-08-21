@@ -62,6 +62,29 @@ cuando estaba vacío, y el export no validaba nada — se podía descargar un CS
 con el texto de ejemplo como mensaje real a cientos de clientes. Ahora devuelve
 sólo lo escrito de verdad y la descarga se bloquea con un aviso.
 
+### El botón «Continuar» que esquiva (2026-08-21)
+
+Pedido de Berna: "nadie me transfiere", así que a veces el botón de la donación
+se corre para hacer renegar un poco. Es un chiste — pero un chiste en una
+herramienta de trabajo se convierte en un ticket de "no anda" muy rápido. Los
+candados que lo mantienen del lado del chiste, y que **no hay que sacar**:
+
+1. **Cede siempre a los `DODGE_MAX` intentos** (hoy 2 esquives, al tercer clic
+   pasa). Nunca puede quedar inalcanzable.
+2. **Sólo esquiva con el mouse** (`e.detail > 0`). Un click disparado por
+   teclado (Tab + Enter/Espacio) o por código tiene `detail === 0` y pasa
+   derecho: si no, el que no usa mouse se queda sin poder descargar.
+3. **«Cancelar» nunca se mueve** y `prefers-reduced-motion` desactiva el chiste
+   entero.
+4. **Se sortea al abrir el modal**, no en cada clic: si se sorteara por clic, el
+   botón podría "curarse" en el medio de la secuencia y quedar raro.
+5. **Se desliza, no se teletransporta** (transición de 0.22 s) y aparece un
+   cartelito. Un botón que salta sin explicación se lee como bug; uno que se
+   corre con un "Dale, poné algo 🙏" se lee como joda.
+
+Se afina con `DODGE_CHANCE` (0.35 ≈ 1 de cada 3 descargas) y `DODGE_MAX` (2).
+Para apagarlo del todo: `DODGE_CHANCE = 0`.
+
 ### El nombre del archivo lo elige el usuario (2026-08-21)
 
 Antes el CSV bajaba directo con el nombre puesto por la página. Ahora hay un
