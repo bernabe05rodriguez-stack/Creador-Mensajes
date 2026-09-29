@@ -1,6 +1,9 @@
 # Creador-Mensajes - MAVERIX
 
 App web para generar CSV de mensajes masivos a partir de un "Informe de Cuentas" (`.csv` o `.xlsx`).
+Es una herramienta **interna de Cuervo Abogados**, no un producto de la suite
+pública HERMES + Fidelio. Su salida es compatible con ambos motores, pero ellos
+aceptan cualquier CSV que respete `Telefono` + `Mensaje` y no dependen de esta web.
 Al abrir la página pide el **usuario del ejecutivo** (autocompletado sobre una lista fija en `index.html`); ese nombre queda registrado en cada ingreso y cada descarga. Al descargar se muestra un **cartel de la rifa solidaria** (7 segundos con cuenta regresiva, **no se puede saltear**) antes de pedir el nombre del archivo. Hay una **pestaña lateral «✎ Sugerencias»** (voluntaria, siempre visible al costado derecho) que abre un modal chico para escribir, y un panel `/admin` para ver quién usa la página y lo que escriben.
 
 **En vivo:** https://creador.fidelizador.online (panel en `/admin`) — dominio propio en Hostinger; el viejo `*.easypanel.host` fue borrado y da 404.

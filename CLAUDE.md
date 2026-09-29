@@ -6,7 +6,15 @@ Se carga solo al trabajar en este repo. Info general y accesos: `proyectos/Cread
 
 ## Qué es
 
-Herramienta web para los ejecutivos de MAVERIX: suben un CSV **o un Excel** y les devuelve teléfonos `+549` con mensajes personalizados, listos para cargar en HERMES. Gate por ejecutivo (215 usuarios), cartel de la rifa solidaria (7 segundos, **sin saltearse**) antes de cada descarga, pestaña lateral de sugerencias y panel de uso en `/admin`.
+Herramienta web **interna del trabajo de Berna en Cuervo Abogados** (identidad
+visual/flujo MAVERIX): los ejecutivos suben un CSV **o un Excel** y reciben
+teléfonos `+549` con mensajes personalizados. Gate por ejecutivo (215 usuarios),
+cartel de la rifa solidaria (7 segundos, **sin saltearse**) antes de cada descarga,
+pestaña lateral de sugerencias y panel de uso en `/admin`.
+
+🔴 **No es parte del producto público HERMES + Fidelio.** Es uno de los posibles
+productores del CSV `Telefono` + `Mensaje`, pero los motores no dependen de esta
+web y `elhermes.site` no debe promocionarla.
 
 La pantalla son **tres pasos** (archivo → mensaje → descargar). Las columnas de teléfono y las extra son bloques **plegados** dentro del paso 1 y del 3: hasta el 2026-09-01 eran los pasos 2 y 4 numerados.
 
